@@ -41,7 +41,7 @@
                 }
               }
             },
-            "url": "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=AIzaSyB9Jns2_29ovACAi9ofVyDI4_wgQL0yPYU"
+            "url": "https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key={{firebase_api_key}}"
           }
         },
         {
