@@ -31,7 +31,7 @@ def migrate_products(session: Session, products: List[Dict[str, Any]]):
     for p in products:
         if not session.get(Product, p["id"]):
             # Filtramos campos que coincidan exactamente con el modelo
-            valid_data = {k: v for k, v in p.items() if k in Product.__fields__}
+            valid_data = {k: v for k, v in p.items() if k in Product.model_fields}
             session.add(Product(**valid_data))
 
 def migrate_reviews(session: Session, reviews_map: Dict[str, List[Dict[str, Any]]]):
