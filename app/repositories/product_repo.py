@@ -9,9 +9,50 @@ class ProductRepository:
     def __init__(self, session: Session):
         self.session = session
 
-    def list_all_products(self) -> List[Product]:
+    def list_all_products(
+        self, 
+        category: Optional[str] = None, 
+        search: Optional[str] = None,
+        offset: int = 0,
+        limit: int = 100
+    ) -> List[Product]:
         statement = select(Product)
+        
+        # Filtrado por categoría (buscando dentro del JSON de categoria)
+        if category:
+            # PostgreSQL syntax para buscar en JSON: categoria->>'id' = 'category'
+            # En SQLModel usamos .cast o comparaciones directas si es posible, 
+            # pero dado que es un campo JSON, usaremos una aproximación compatible.
+            statement = statement.where(Product.categoria["id"].astext == category)
+        
+        # Búsqueda por texto (nombre o descripción)
+        if search:
+            search_filter = f"%{search}%"
+            statement = statement.where(
+                (Product.nombre.ilike(search_filter)) | 
+                (Product.descripcion.ilike(search_filter))
+            )
+        
+        # Paginación
+        statement = statement.offset(offset).limit(limit)
+        
         return self.session.exec(statement).all()
+
+    def count_products(self, category: Optional[str] = None, search: Optional[str] = None) -> int:
+        from sqlmodel import func
+        statement = select(func.count()).select_from(Product)
+        
+        if category:
+            statement = statement.where(Product.categoria["id"].astext == category)
+        
+        if search:
+            search_filter = f"%{search}%"
+            statement = statement.where(
+                (Product.nombre.ilike(search_filter)) | 
+                (Product.descripcion.ilike(search_filter))
+            )
+            
+        return self.session.exec(statement).one()
 
     def find_product_by_id(self, product_id: str) -> Optional[Product]:
         return self.session.get(Product, product_id)
