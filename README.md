@@ -1,72 +1,120 @@
-# The Casa Chill & Coffe API ☕️
+# ☕ The Casa Chill & Coffee API
 
-API robusta y profesional para la mejor cafetería. Construida con **FastAPI** y diseñada siguiendo una arquitectura por capas (Layered Architecture), integrada con **Supabase (PostgreSQL)** y **Firebase**.
+[![Python](https://img.shields.io/badge/Python-3.10+-3776AB?style=flat&logo=python&logoColor=white)](https://www.python.org/)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.115+-009688?style=flat&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
+[![SQLModel](https://img.shields.io/badge/SQLModel-0.0.22-009688?style=flat)](https://sqlmodel.tiangolo.com/)
+[![Firebase](https://img.shields.io/badge/Firebase-Admin_SDK-FFCA28?style=flat&logo=firebase&logoColor=white)](https://firebase.google.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supabase-336791?style=flat&logo=postgresql&logoColor=white)](https://supabase.com/)
 
-## 🚀 Características
+API robusta, moderna y escalable diseñada para la gestión integral de una cafetería premium. Implementa una **Arquitectura en Capas (Layered Architecture)** para garantizar mantenibilidad, testabilidad y una clara separación de responsabilidades.
 
-- **Arquitectura Modular:** Separación estricta de responsabilidades (API, Services, Repositories, AI).
-- **Persistencia en la Nube:** Integración completa con PostgreSQL (Supabase) mediante **SQLModel**.
-- **Autenticación con Firebase:** Validación de identidad mediante tokens de Firebase Admin SDK.
-- **Asistente de IA:** Integración con Groq (Llama 3.1) para recomendaciones personalizadas.
-- **Manejo de Media:** Router dedicado para servir imágenes locales con generación dinámica de URLs.
-- **Observabilidad:** Sistema de logueo estructurado con colores y niveles.
-- **Gestión Moderna:** Automatización avanzada con `uv` y `Makefile`.
+---
 
-## 🛠️ Instalación y Uso
+## 🚀 Características Principales
 
-Asegúrate de tener [uv](https://github.com/astral-sh/uv) instalado.
+- **Inteligencia Artificial:** Integración con **Groq (Llama 3.1)** para un asistente de café inteligente y recomendaciones personalizadas.
+- **Seguridad de Grado Industrial:** Autenticación delegada en **Firebase Admin SDK**. Sincronización automática de perfiles.
+- **Persistencia Robusta:** Uso de **SQLModel** (Pydantic + SQLAlchemy) con **PostgreSQL** alojado en **Supabase**.
+- **Gestión de Media:** Servidor de assets estáticos con generación dinámica de URLs para productos y promociones.
+- **Rendimiento Optimizado:** Construido sobre **FastAPI** y gestionado con **uv** para una velocidad de desarrollo y ejecución superior.
+- **Arquitectura Profesional:**
+    - `Routers`: Definición de endpoints y validación de esquemas.
+    - `Services`: Lógica de negocio pura.
+    - `Repositories`: Abstracción del acceso a datos.
+    - `Models`: Definiciones de tablas y tipos.
 
-1. **Instalar dependencias:**
+---
 
-   ```bash
-   make install
-   ```
+## 🛠️ Stack Tecnológico
 
-2. **Configurar variables de entorno:**
-   Crea un archivo `.env` basado en `.env.example` con las siguientes claves críticas:
-   - `DATABASE_URL`: URL de conexión de Supabase (usar puerto 6543 para IPv4).
-   - `FIREBASE_CREDENTIALS`: Ruta al archivo JSON de tu service account de Firebase.
-   - `BASE_URL`: URL raíz del API (ej: `http://localhost:8000`).
-   - `GROQ_API_KEY`: Tu llave de Groq para funciones de IA.
+- **Core:** FastAPI, Uvicorn, Pydantic (v2).
+- **Database:** SQLModel, PostgreSQL (Supabase).
+- **Auth:** Firebase Admin SDK.
+- **AI:** Groq SDK.
+- **Tooling:** `uv` (Package Manager), `Makefile`, `Python-Dotenv`.
 
-3. **Poblar la base de datos:**
-   Ejecuta el script de carga inicial para crear las tablas y subir los productos:
+---
 
-   ```bash
-   make seed
-   ```
+## 📂 Estructura del Proyecto
 
-4. **Ejecutar servidor de desarrollo:**
-   ```bash
-   make dev
-   ```
-
-## 📁 Estructura del Proyecto
-
-- `app/api/`: Capa de presentación (Routers y Dependencias).
-- `app/services/`: Lógica de negocio y servicios core.
-- `app/repositories/`: Acceso a datos (PostgreSQL/SQLModel).
-- `app/models/`: Definición de tablas de base de datos.
-- `app/ai/`: Integración con LLMs y Agentes.
-- `app/core/`: Configuraciones globales, Firebase y DB.
-- `app/data/static/`: Almacenamiento local de imágenes.
-
-## 🔒 Autenticación
-
-El backend no almacena contraseñas. El flujo es:
-
-1. El cliente (iOS/Web) se autentica en Firebase.
-2. El cliente envía el `id_token` al endpoint `POST /api/v1/auth/verify`.
-3. El API valida el token y sincroniza el perfil del usuario en PostgreSQL.
-
-## 🧪 Pruebas
-
-Para ejecutar los tests unitarios:
-
-```bash
-make test
+```text
+app/
+├── ai/           # Agentes de IA y proveedores (Groq)
+├── api/          # Routers (v1) y dependencias de seguridad
+├── core/         # Configuración global, DB y Firebase init
+├── data/         # Archivos estáticos e imágenes de productos
+├── models/       # Modelos de base de datos (SQLModel)
+├── repositories/ # Capa de persistencia (Queries SQL)
+├── schemas/      # Modelos de validación Pydantic
+└── services/     # Lógica de negocio (Orquestación)
 ```
 
 ---
 
-Desarrollado para el proyecto The Casa Chill & Coffe.
+## ⚙️ Instalación y Configuración
+
+### Prerrequisitos
+- [uv](https://github.com/astral-sh/uv) instalado.
+- Cuenta en Supabase y Firebase.
+
+### Pasos
+
+1. **Clonar e Instalar:**
+   ```bash
+   make install
+   ```
+
+2. **Variables de Entorno:**
+   Crea un archivo `.env` basado en `.env.example`:
+   ```env
+   DATABASE_URL="postgresql://user:pass@host:6543/postgres"
+   FIREBASE_CREDENTIALS="path/to/firebase-sdk.json"
+   GROQ_API_KEY="gsk_..."
+   BASE_URL="http://localhost:8000"
+   ```
+
+3. **Poblar Base de Datos (Opcional):**
+   ```bash
+   make seed
+   ```
+
+4. **Ejecutar en Desarrollo:**
+   ```bash
+   make dev
+   ```
+
+---
+
+## 🔌 API Endpoints (Resumen)
+
+La API está documentada interactivamente en `/docs` (Swagger) o `/redoc`.
+
+- **`Auth`**: `/api/v1/auth/verify` - Sincronización con Firebase.
+- **`User`**: `/api/v1/user/profile`, `/addresses`, `/favorites`.
+- **`Products`**: `/api/v1/products` - Catálogo completo con imágenes.
+- **`Cart`**: `/api/v1/cart` - Gestión de carrito persistente.
+- **`Orders`**: `/api/v1/orders` - Creación y seguimiento de pedidos.
+- **`Support/AI`**: `/api/v1/support/chat` - Asistente inteligente.
+
+---
+
+## 🛠️ Comandos Útiles (Makefile)
+
+| Comando | Descripción |
+| :--- | :--- |
+| `make install` | Instala dependencias y sincroniza el entorno con `uv`. |
+| `make dev` | Inicia el servidor FastAPI con hot-reload. |
+| `make seed` | Ejecuta el script de carga de datos iniciales. |
+| `make export` | Genera `requirements.txt` actualizado. |
+| `make clean` | Limpia caches y el entorno virtual. |
+
+---
+
+## 🧪 Pruebas y Colecciones
+
+Se incluyen colecciones de **Postman** en la raíz para facilitar las pruebas:
+- `coffee_api_client.json`: Flujos completos para el cliente.
+- `coffee_api_admin.json`: Endpoints administrativos.
+
+---
+Desarrollado con mucho cafe para **The Casa Chill & Coffee**.
