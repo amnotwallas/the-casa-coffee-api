@@ -1,0 +1,289 @@
+{
+  "store_info": {
+    "nombre": "The Casa Chill & Coffe - Roma Norte",
+    "direccion": "Colima 123, Roma Norte, CDMX, 06700",
+    "telefono": "+525598765432",
+    "email": "roma@coffeeanddreams.mx",
+    "horarios": [
+      {
+        "dia": "Lunes-Viernes",
+        "apertura": "07:00",
+        "cierre": "21:00",
+        "abierto": true
+      },
+      {
+        "dia": "Sábado-Domingo",
+        "apertura": "08:00",
+        "cierre": "22:00",
+        "abierto": true
+      }
+    ],
+    "estaAbierto": true,
+    "tiempo_espera_actual": 15,
+    "volumen_pedidos": "medio"
+  },
+  "products": [
+    {
+      "id": "uuid-001",
+      "nombre": "Frappé Mocha Blanco",
+      "descripcion": "Refrescante mezcla de café espresso, chocolate blanco premium y leche, licuado con hielo.",
+      "precio": 89.0,
+      "intensidad": 3,
+      "imagenes": ["espresso.png"],
+      "categoria": {
+        "id": "cat-cold",
+        "nombre": "Bebidas Frías"
+      },
+      "ingredientes": ["Espresso", "Chocolate blanco", "Leche"],
+      "valores_nutricionales": {
+        "calorias": "420 kcal",
+        "grasas": "18g",
+        "proteinas": "6g"
+      },
+      "personalizaciones": [
+        {
+          "tipo": "Tamaño",
+          "opciones": [
+            {
+              "nombre": "Chico",
+              "extra_precio": 0
+            }
+          ]
+        },
+        {
+          "tipo": "Leche",
+          "opciones": [
+            {
+              "nombre": "Entera",
+              "extra_precio": 0
+            },
+            {
+              "nombre": "Almendra",
+              "extra_precio": 12.0
+            }
+          ]
+        }
+      ],
+      "rating_avg": 4.8,
+      "reviews_count": 84,
+      "disponible": true
+    },
+    {
+      "id": "uuid-002",
+      "nombre": "Espresso Intenso",
+      "descripcion": "Shot puro de café con crema dorada y notas intensas a chocolate.",
+      "precio": 35.0,
+      "intensidad": 5,
+      "imagenes": ["espresso.png"],
+      "categoria": {
+        "id": "cat-hot",
+        "nombre": "Cafés"
+      },
+      "ingredientes": ["Café de altura"],
+      "valores_nutricionales": {
+        "calorias": "2 kcal",
+        "grasas": "0g",
+        "proteinas": "0.2g"
+      },
+      "personalizaciones": [],
+      "rating_avg": 4.9,
+      "reviews_count": 120,
+      "disponible": true
+    },
+    {
+      "id": "uuid-003",
+      "nombre": "Americano Tradicional",
+      "descripcion": "Espresso diluido en agua caliente para un sabor suave pero equilibrado.",
+      "precio": 42.0,
+      "intensidad": 4,
+      "imagenes": ["espresso.png"],
+      "categoria": {
+        "id": "cat-hot",
+        "nombre": "Cafés"
+      },
+      "ingredientes": ["Espresso", "Agua purificada"],
+      "valores_nutricionales": {
+        "calorias": "5 kcal",
+        "grasas": "0g",
+        "proteinas": "0.5g"
+      },
+      "personalizaciones": [
+        {
+          "tipo": "Tamaño",
+          "opciones": [
+            {
+              "nombre": "Mediano",
+              "extra_precio": 0
+            },
+            {
+              "nombre": "Grande",
+              "extra_precio": 10.0
+            }
+          ]
+        }
+      ],
+      "rating_avg": 4.7,
+      "reviews_count": 95,
+      "disponible": true
+    },
+    {
+      "id": "uuid-004",
+      "nombre": "Latte Vainilla",
+      "descripcion": "Café espresso combinado con leche vaporizada y un toque de jarabe de vainilla.",
+      "precio": 68.0,
+      "intensidad": 3,
+      "imagenes": ["espresso.png"],
+      "categoria": {
+        "id": "cat-hot",
+        "nombre": "Cafés"
+      },
+      "ingredientes": ["Espresso", "Leche", "Jarabe de vainilla"],
+      "valores_nutricionales": {
+        "calorias": "190 kcal",
+        "grasas": "7g",
+        "proteinas": "8g"
+      },
+      "personalizaciones": [
+        {
+          "tipo": "Leche",
+          "opciones": [
+            {
+              "nombre": "Entera",
+              "extra_precio": 0
+            },
+            {
+              "nombre": "Deslactosada",
+              "extra_precio": 5.0
+            }
+          ]
+        }
+      ],
+      "rating_avg": 4.8,
+      "reviews_count": 150,
+      "disponible": true
+    },
+    {
+      "id": "uuid-005",
+      "nombre": "Cappuccino Clásico",
+      "descripcion": "Balance perfecto de café, leche vaporizada y abundante espuma.",
+      "precio": 65.0,
+      "intensidad": 3,
+      "imagenes": ["espresso.png"],
+      "categoria": {
+        "id": "cat-hot",
+        "nombre": "Cafés"
+      },
+      "ingredientes": ["Espresso", "Leche vaporizada", "Espuma de leche"],
+      "valores_nutricionales": {
+        "calorias": "120 kcal",
+        "grasas": "5g",
+        "proteinas": "6g"
+      },
+      "personalizaciones": [],
+      "rating_avg": 4.8,
+      "reviews_count": 110,
+      "disponible": true
+    }
+  ],
+  "users": [
+    {
+      "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      "nombre": "Juan Pérez Actualizado",
+      "email": "juan.perez@example.com",
+      "password": "hashed_password_123",
+      "telefono": "+525512345678",
+      "refreshToken": "refresh_mock_f47ac10b-58cc-4372-a567-0e02b2c3d479",
+      "direcciones": [],
+      "favoritos": []
+    },
+    {
+      "nombre": "Estudiante Test",
+      "email": "estudiante@example.com",
+      "password": "Password123!",
+      "telefono": "+525511223344",
+      "id": "ecdb241b-5a65-490f-9a5a-bafc4f1b391e",
+      "direcciones": [],
+      "favoritos": [],
+      "preferencias": {
+        "notificacionesPush": true,
+        "tipoLecheFavorita": "Almendra",
+        "idioma": "es"
+      }
+    }
+  ],
+  "orders": [],
+  "carts": {
+    "f47ac10b-58cc-4372-a567-0e02b2c3d479": {
+      "items": [],
+      "total": 0.0,
+      "itemsCount": 0
+    }
+  },
+  "reviews": {
+    "uuid-001": [
+      {
+        "rating": 5,
+        "comentario": "¡El mejor café de la zona!",
+        "fotos": [],
+        "userId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+        "userName": "Juan Pérez",
+        "id": "rev-b224fff0",
+        "fecha": "2026-05-12T02:31:45.854555+00:00",
+        "helpful_count": 0
+      },
+      {
+        "rating": 5,
+        "comentario": "¡El mejor café de la zona!",
+        "fotos": [],
+        "userId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+        "userName": "Juan Pérez",
+        "id": "rev-a0a06468",
+        "fecha": "2026-05-12T02:33:37.365498+00:00",
+        "helpful_count": 0
+      },
+      {
+        "rating": 5,
+        "comentario": "Excelente experiencia!",
+        "fotos": [],
+        "userId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+        "userName": "Juan Pérez",
+        "id": "rev-cd231515",
+        "fecha": "2026-05-12T02:57:48.509646+00:00",
+        "helpful_count": 0
+      },
+      {
+        "rating": 5,
+        "comentario": "Excelente servicio!",
+        "fotos": [],
+        "userId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+        "userName": "Juan Pérez",
+        "id": "rev-8faf1f06",
+        "fecha": "2026-05-12T03:24:12.663020+00:00",
+        "helpful_count": 0
+      },
+      {
+        "rating": 5,
+        "comentario": "Excelente servicio!",
+        "fotos": [],
+        "userId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+        "userName": "Juan Pérez",
+        "id": "rev-286e07c7",
+        "fecha": "2026-05-12T03:28:47.857536+00:00",
+        "helpful_count": 0
+      },
+      {
+        "rating": 5,
+        "comentario": "Excelente servicio!",
+        "fotos": [],
+        "userId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+        "userName": "Juan Pérez",
+        "id": "rev-7e8532a2",
+        "fecha": "2026-05-12T03:44:26.780239+00:00",
+        "helpful_count": 0
+      }
+    ]
+  },
+  "promotions": [],
+  "notifications": {},
+  "faq": []
+}
