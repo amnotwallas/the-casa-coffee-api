@@ -16,11 +16,14 @@ async def list_products(
     limit: int = Query(10, ge=1, le=100),
     product_service: ProductService = Depends(get_product_service)
 ):
-    products = product_service.get_all_products(category=category, search=search)
-    total = len(products)
-    start = (page - 1) * limit
-    end = start + limit
-    return {"data": products[start:end], "total": total, "page": page}
+    products = product_service.get_all_products(
+        category=category, 
+        search=search, 
+        page=page, 
+        limit=limit
+    )
+    total = product_service.get_total_count(category=category, search=search)
+    return {"data": products, "total": total, "page": page}
 
 @router.get("/categories")
 async def get_categories(product_service: ProductService = Depends(get_product_service)):
@@ -33,10 +36,13 @@ async def get_featured(product_service: ProductService = Depends(get_product_ser
 @router.get("/search")
 async def search_products(
     q: str = Query(..., min_length=2),
+    page: int = Query(1, ge=1),
+    limit: int = Query(10, ge=1, le=100),
     product_service: ProductService = Depends(get_product_service)
 ):
-    results = product_service.get_all_products(search=q)
-    return {"results": results, "count": len(results)}
+    results = product_service.get_all_products(search=q, page=page, limit=limit)
+    total = product_service.get_total_count(search=q)
+    return {"results": results, "count": total}
 
 @router.get("/{product_id}", response_model=Product)
 async def get_product(
