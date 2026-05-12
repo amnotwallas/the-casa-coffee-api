@@ -1,0 +1,177 @@
+{
+  "info": {
+    "_postman_id": "coffee-api-admin-v1",
+    "name": "The Casa Chill & Coffe - ADMIN DASHBOARD",
+    "description": "Colección para administración. Requiere X-Admin-Token.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Dashboard & Analytics",
+      "item": [
+        {
+          "name": "Ver Analíticas",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": "{{base_url}}/admin/analytics"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Gestión de Catálogo",
+      "item": [
+        {
+          "name": "Listar Productos (Admin)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.data && jsonData.data.length > 0) {",
+                  "    pm.collectionVariables.set(\"last_admin_product_id\", jsonData.data[0].id);",
+                  "    console.log('Admin Product ID guardado:', jsonData.data[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/products"
+          }
+        },
+        {
+          "name": "Crear Producto",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.id) {",
+                  "    pm.collectionVariables.set(\"last_admin_product_id\", jsonData.id);",
+                  "    console.log('Admin Product ID guardado:', jsonData.id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"id\": \"latte-vainilla-001\",\n    \"nombre\": \"Latte de Vainilla\",\n    \"descripcion\": \"Café espresso con leche vaporizada y jarabe de vainilla\",\n    \"precio\": 65.0,\n    \"intensidad\": 2,\n    \"imagenes\": [\"latte_vainilla.png\"],\n    \"categoria\": {\n        \"id\": \"bebidas_calientes\",\n        \"nombre\": \"Bebidas Calientes\"\n    },\n    \"ingredientes\": [\"Espresso\", \"Leche\", \"Jarabe de Vainilla\"],\n    \"valores_nutricionales\": {\n        \"calorias\": \"150 kcal\",\n        \"proteinas\": \"8g\",\n        \"grasas\": \"5g\",\n        \"carbohidratos\": \"20g\"\n    },\n    \"personalizaciones\": [\n        {\n            \"tipo\": \"Leche\",\n            \"opciones\": [\n                {\"nombre\": \"Entera\", \"extra_precio\": 0},\n                {\"nombre\": \"Almendra\", \"extra_precio\": 10}\n            ]\n        }\n    ],\n    \"reviews_count\": 0,\n    \"rating_avg\": 0.0,\n    \"disponible\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{base_url}}/admin/products"
+          }
+        },
+        {
+          "name": "Actualizar Producto",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"precio\": 68.0,\n    \"disponible\": true\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{base_url}}/admin/products/{{last_admin_product_id}}"
+          }
+        },
+        {
+          "name": "Eliminar Producto",
+          "request": {
+            "method": "DELETE",
+            "url": "{{base_url}}/admin/products/{{last_admin_product_id}}"
+          }
+        }
+      ]
+    },
+    {
+      "name": "Gestión de Pedidos",
+      "item": [
+        {
+          "name": "Listar Todos los Pedidos",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.length > 0) {",
+                  "    pm.collectionVariables.set(\"last_admin_order_id\", jsonData[0].id);",
+                  "    console.log('Admin Order ID guardado:', jsonData[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/admin/orders"
+          }
+        },
+        {
+          "name": "Actualizar Estado de Pedido",
+          "request": {
+            "method": "PATCH",
+            "header": [],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"preparing\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": "{{base_url}}/admin/orders/{{last_admin_order_id}}/status"
+          }
+        }
+      ]
+    }
+  ],
+  "auth": {
+    "type": "apikey",
+    "apikey": [
+      {
+        "key": "value",
+        "value": "{{admin_token}}",
+        "type": "string"
+      },
+      {
+        "key": "key",
+        "value": "X-Admin-Token",
+        "type": "string"
+      }
+    ]
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:8000/api/v1",
+      "type": "string"
+    },
+    {
+      "key": "admin_token",
+      "value": "dev_admin_token_placeholder",
+      "type": "string"
+    }
+  ]
+}
