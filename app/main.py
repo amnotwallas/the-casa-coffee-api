@@ -37,7 +37,7 @@ app.include_router(media.router, prefix="/api/v1")
 @app.on_event("startup")
 async def startup_event():
     logger.info(f"--- {settings.APP_NAME} v{settings.VERSION} iniciado correctamente ---")
-    init_db() # Inicializa conexión con Supabase
+    await init_db() # Inicializa conexión con Supabase (AHORA ASYNC)
     init_firebase() # Inicializa Firebase Admin
     if not settings.GROQ_API_KEY:
         logger.warning("GROQ_API_KEY no detectada. Las funciones de IA estarán deshabilitadas.")

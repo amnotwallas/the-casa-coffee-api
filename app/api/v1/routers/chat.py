@@ -17,7 +17,7 @@ async def chat_message(
 ):
     """Procesa un mensaje de chat con el Barista AI con streaming. REQUIERE LOGIN."""
     
-    def event_generator():
+    async def event_generator():
         # Enviar metadata inicial
         metadata = {
             "conversationId": request.conversationId or "new-session",
@@ -26,7 +26,8 @@ async def chat_message(
         yield f"data: {json.dumps(metadata)}\n\n"
         
         # Enviar el stream de la respuesta
-        for chunk in agent_service.stream_chat(request.message):
+        # stream_chat ahora es async generator
+        async for chunk in agent_service.stream_chat(request.message):
             if chunk:
                 yield f"data: {chunk}\n\n"
 
@@ -40,7 +41,7 @@ async def get_welcome(
     agent_service: AgentService = Depends(get_agent_service)
 ):
     """Genera un mensaje de bienvenida de IA y recomendaciones. PÚBLICO."""
-    return agent_service.get_welcome_message()
+    return await agent_service.get_welcome_message()
 
 @router.get("/history")
 async def get_chat_history(
@@ -57,7 +58,7 @@ async def get_recommendations(
     current_user_id: str = Depends(get_current_user_required)
 ):
     """Obtiene recomendaciones personalizadas basadas en gustos. REQUIERE LOGIN."""
-    return agent_service.get_personalized_recommendations(preferences)
+    return await agent_service.get_personalized_recommendations(preferences)
 
 @router.post("/recommendations/quiz")
 async def process_recommendation_quiz(
@@ -65,4 +66,4 @@ async def process_recommendation_quiz(
     agent_service: AgentService = Depends(get_agent_service)
 ):
     """Procesa un quiz para recomendar productos. PÚBLICO."""
-    return agent_service.process_quiz(answers)
+    return await agent_service.process_quiz(answers)

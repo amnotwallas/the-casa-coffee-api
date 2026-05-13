@@ -11,12 +11,12 @@ router = APIRouter(tags=["Support"])
 @router.get("/promotions", response_model=List[Promotion])
 async def list_promotions(support_service: SupportService = Depends(get_support_service)):
     """Lista todas las promociones activas."""
-    return support_service.get_active_promotions()
+    return await support_service.get_active_promotions()
 
 @router.get("/promotions/{promo_id}", response_model=Promotion)
 async def get_promotion(promo_id: str, support_service: SupportService = Depends(get_support_service)):
     """Detalle de una promoción específica."""
-    return support_service.get_promotion_by_id(promo_id)
+    return await support_service.get_promotion_by_id(promo_id)
 
 @router.post("/coupons/validate")
 async def validate_coupon(code: str):
@@ -31,7 +31,7 @@ async def list_notifications(
     current_user: dict = Depends(get_current_user_required)
 ):
     """Obtiene las notificaciones del usuario actual. REQUIERE LOGIN."""
-    return support_service.get_user_notifications(current_user["id"])
+    return await support_service.get_user_notifications(current_user["id"])
 
 @router.patch("/notifications/{notif_id}/read")
 async def mark_read(
@@ -40,7 +40,7 @@ async def mark_read(
     current_user: dict = Depends(get_current_user_required)
 ):
     """Marca una notificación como leída. REQUIERE LOGIN."""
-    support_service.mark_notification_read(current_user["id"], notif_id)
+    await support_service.mark_notification_read(current_user["id"], notif_id)
     return {"message": "Notificación marcada como leída"}
 
 @router.patch("/notifications/read-all")
@@ -49,28 +49,28 @@ async def mark_all_read(
     current_user: dict = Depends(get_current_user_required)
 ):
     """Marca todas las notificaciones como leídas. REQUIERE LOGIN."""
-    support_service.mark_all_as_read(current_user["id"])
+    await support_service.mark_all_as_read(current_user["id"])
     return {"message": "Todas las notificaciones marcadas como leídas"}
 
 @router.get("/store/info")
 async def get_store_info(support_service: SupportService = Depends(get_support_service)):
     """Obtiene información detallada de la tienda."""
-    return support_service.get_full_store_info()
+    return await support_service.get_full_store_info()
 
 @router.get("/store/hours", response_model=StoreHours)
 async def get_store_hours(support_service: SupportService = Depends(get_support_service)):
     """Obtiene horarios y estado de disponibilidad de la tienda."""
-    return support_service.get_store_hours()
+    return await support_service.get_store_hours()
 
 @router.get("/menu-of-day")
 async def get_menu_of_day(support_service: SupportService = Depends(get_support_service)):
     """Obtiene el menú o especial del día."""
-    return support_service.get_menu_of_day()
+    return await support_service.get_menu_of_day()
 
 @router.get("/faq", response_model=List[FAQ])
 async def list_faqs(support_service: SupportService = Depends(get_support_service)):
     """Lista las preguntas frecuentes."""
-    return support_service.get_faqs()
+    return await support_service.get_faqs()
 
 @router.post("/notifications/token")
 async def register_token(
@@ -88,5 +88,5 @@ async def mark_helpful(
     support_service: SupportService = Depends(get_support_service)
 ):
     """Marca una reseña como útil."""
-    new_count = support_service.mark_review_helpful(review_id)
+    new_count = await support_service.mark_review_helpful(review_id)
     return {"helpful_count": new_count}

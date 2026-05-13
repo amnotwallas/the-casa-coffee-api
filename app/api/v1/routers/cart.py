@@ -13,7 +13,7 @@ async def get_cart(
     """Obtiene el carrito. Si no hay login, devuelve carrito vacío."""
     if not current_user:
         return Cart()
-    return cart_service.get_user_cart(current_user["id"])
+    return await cart_service.get_user_cart(current_user["id"])
 
 @router.post("/add", response_model=Cart)
 async def add_item(
@@ -24,7 +24,7 @@ async def add_item(
     """Añade un producto al carrito en la nube."""
     if not current_user:
         raise HTTPException(status_code=401, detail="Inicia sesión para sincronizar tu carrito.")
-    return cart_service.add_to_cart(current_user["id"], request)
+    return await cart_service.add_to_cart(current_user["id"], request)
 
 @router.patch("/item/{item_id}", response_model=Cart)
 async def update_item(
@@ -35,7 +35,7 @@ async def update_item(
 ):
     if not current_user:
         raise HTTPException(status_code=401, detail="Inicia sesión para actualizar tu carrito.")
-    return cart_service.update_item(current_user["id"], item_id, request)
+    return await cart_service.update_item(current_user["id"], item_id, request)
 
 @router.delete("/item/{item_id}", response_model=Cart)
 async def remove_item(
@@ -45,7 +45,7 @@ async def remove_item(
 ):
     if not current_user:
         raise HTTPException(status_code=401, detail="Inicia sesión para gestionar tu carrito.")
-    return cart_service.remove_item(current_user["id"], item_id)
+    return await cart_service.remove_item(current_user["id"], item_id)
 
 @router.post("/apply-coupon")
 async def apply_coupon(
@@ -55,7 +55,7 @@ async def apply_coupon(
 ):
     if not current_user:
         raise HTTPException(status_code=401, detail="Inicia sesión para aplicar cupones.")
-    return cart_service.apply_coupon(current_user["id"], code)
+    return await cart_service.apply_coupon(current_user["id"], code)
 
 @router.delete("/clear")
 async def clear_cart(
@@ -64,5 +64,5 @@ async def clear_cart(
 ):
     if not current_user:
         raise HTTPException(status_code=401, detail="Inicia sesión para vaciar tu carrito.")
-    cart_service.clear_cart(current_user["id"])
+    await cart_service.clear_cart(current_user["id"])
     return {"message": "Carrito vaciado correctamente"}

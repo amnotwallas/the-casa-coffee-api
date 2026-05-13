@@ -1,15 +1,16 @@
 from typing import List, Optional
-from sqlmodel import Session, select
+from sqlmodel import select, func
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.product import Product
 from app.core.logger import get_logger
 
 logger = get_logger(__name__)
 
 class ProductRepository:
-    def __init__(self, session: Session):
+    def __init__(self, session: AsyncSession):
         self.session = session
 
-    def list_all_products(
+    async def list_all_products(
         self, 
         category: Optional[str] = None, 
         search: Optional[str] = None,
@@ -18,14 +19,9 @@ class ProductRepository:
     ) -> List[Product]:
         statement = select(Product)
         
-        # Filtrado por categoría (buscando dentro del JSON de categoria)
         if category:
-            # PostgreSQL syntax para buscar en JSON: categoria->>'id' = 'category'
-            # En SQLModel usamos .cast o comparaciones directas si es posible, 
-            # pero dado que es un campo JSON, usaremos una aproximación compatible.
             statement = statement.where(Product.categoria["id"].astext == category)
         
-        # Búsqueda por texto (nombre o descripción)
         if search:
             search_filter = f"%{search}%"
             statement = statement.where(
@@ -33,13 +29,12 @@ class ProductRepository:
                 (Product.descripcion.ilike(search_filter))
             )
         
-        # Paginación
         statement = statement.offset(offset).limit(limit)
         
-        return self.session.exec(statement).all()
+        result = await self.session.execute(statement)
+        return result.scalars().all()
 
-    def count_products(self, category: Optional[str] = None, search: Optional[str] = None) -> int:
-        from sqlmodel import func
+    async def count_products(self, category: Optional[str] = None, search: Optional[str] = None) -> int:
         statement = select(func.count()).select_from(Product)
         
         if category:
@@ -52,33 +47,34 @@ class ProductRepository:
                 (Product.descripcion.ilike(search_filter))
             )
             
-        return self.session.exec(statement).one()
+        result = await self.session.execute(statement)
+        return result.scalar()
 
-    def find_product_by_id(self, product_id: str) -> Optional[Product]:
-        return self.session.get(Product, product_id)
+    async def find_product_by_id(self, product_id: str) -> Optional[Product]:
+        return await self.session.get(Product, product_id)
 
-    def create_product(self, product_data: dict) -> Product:
+    async def create_product(self, product_data: dict) -> Product:
         product = Product(**product_data)
         self.session.add(product)
-        self.session.commit()
-        self.session.refresh(product)
+        await self.session.commit()
+        await self.session.refresh(product)
         return product
 
-    def update_product(self, product_id: str, update_data: dict) -> Optional[Product]:
-        product = self.find_product_by_id(product_id)
+    async def update_product(self, product_id: str, update_data: dict) -> Optional[Product]:
+        product = await self.find_product_by_id(product_id)
         if product:
             for key, value in update_data.items():
                 setattr(product, key, value)
             self.session.add(product)
-            self.session.commit()
-            self.session.refresh(product)
+            await self.session.commit()
+            await self.session.refresh(product)
             return product
         return None
 
-    def delete_product(self, product_id: str) -> bool:
-        product = self.find_product_by_id(product_id)
+    async def delete_product(self, product_id: str) -> bool:
+        product = await self.find_product_by_id(product_id)
         if product:
-            self.session.delete(product)
-            self.session.commit()
+            await self.session.delete(product)
+            await self.session.commit()
             return True
         return False

@@ -16,7 +16,7 @@ async def verify_auth(
     Punto de entrada único para autenticación.
     Verifica el token de Firebase y sincroniza el perfil en PostgreSQL.
     """
-    return auth_service.verify_and_sync_user(auth_data)
+    return await auth_service.verify_and_sync_user(auth_data)
 
 @router.post("/login", response_model=AuthResponse)
 async def login_legacy(
@@ -24,7 +24,7 @@ async def login_legacy(
     auth_service: AuthService = Depends(get_auth_service)
 ):
     """Alias de /verify para compatibilidad con flujos de login."""
-    return auth_service.verify_and_sync_user(auth_data)
+    return await auth_service.verify_and_sync_user(auth_data)
 
 @router.post("/logout")
 async def logout():

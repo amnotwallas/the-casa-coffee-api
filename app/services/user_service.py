@@ -12,7 +12,7 @@ class AuthService:
     def __init__(self, repository: UserRepository):
         self.repository = repository
 
-    def verify_and_sync_user(self, auth_data: FirebaseAuthRequest) -> AuthResponse:
+    async def verify_and_sync_user(self, auth_data: FirebaseAuthRequest) -> AuthResponse:
         """Verifica el token de Firebase y sincroniza el perfil local en Postgres."""
         logger.info("Iniciando verificación de token de Firebase")
         
@@ -28,7 +28,7 @@ class AuthService:
         foto_firebase = decoded_token.get("picture")
 
         # 2. Buscar usuario en Postgres por firebase_uid
-        user = self.repository.find_by_firebase_uid(firebase_uid)
+        user = await self.repository.find_by_firebase_uid(firebase_uid)
 
         if not user:
             # 3. Si no existe, crearlo (Registro)
@@ -40,7 +40,7 @@ class AuthService:
                 telefono=auth_data.telefono,
                 foto=foto_firebase
             )
-            user = self.repository.create(new_user)
+            user = await self.repository.create(new_user)
         else:
             # Opcional: Actualizar datos si han cambiado en Firebase o en el request
             update_fields = {}
@@ -50,7 +50,7 @@ class AuthService:
                 update_fields["telefono"] = auth_data.telefono
             
             if update_fields:
-                user = self.repository.update(user.id, update_fields)
+                user = await self.repository.update(user.id, update_fields)
 
         # 4. Retornar Perfil
         return AuthResponse(
@@ -61,38 +61,36 @@ class UserService:
     def __init__(self, repository: UserRepository):
         self.repository = repository
 
-    def get_profile(self, user_id: str) -> UserProfile:
-        user = self.repository.find_by_id(user_id)
+    async def get_profile(self, user_id: str) -> UserProfile:
+        user = await self.repository.find_by_id(user_id)
         if not user:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
         return UserProfile(**user.model_dump())
 
-    def update_profile(self, user_id: str, update_data: dict) -> UserProfile:
-        user = self.repository.update(user_id, update_data)
+    async def update_profile(self, user_id: str, update_data: dict) -> UserProfile:
+        user = await self.repository.update(user_id, update_data)
         if not user:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
         return UserProfile(**user.model_dump())
 
-    def add_address(self, user_id: str, address_in: any) -> dict:
-        return self.repository.add_address(user_id, address_in.model_dump())
+    async def add_address(self, user_id: str, address_in: any) -> dict:
+        return await self.repository.add_address(user_id, address_in.model_dump())
 
-    def remove_address(self, user_id: str, address_id: str):
-        if not self.repository.delete_address(user_id, address_id):
+    async def remove_address(self, user_id: str, address_id: str):
+        if not await self.repository.delete_address(user_id, address_id):
             raise HTTPException(status_code=404, detail="Dirección no encontrada")
 
-    def add_to_favorites(self, user_id: str, product_id: str):
-        self.repository.add_favorite(user_id, product_id)
+    async def add_to_favorites(self, user_id: str, product_id: str):
+        await self.repository.add_favorite(user_id, product_id)
 
-    def remove_from_favorites(self, user_id: str, product_id: str):
-        self.repository.remove_favorite(user_id, product_id)
+    async def remove_from_favorites(self, user_id: str, product_id: str):
+        await self.repository.remove_favorite(user_id, product_id)
 
-    def list_favorites(self, user_id: str) -> List[str]:
-        user = self.repository.find_by_id(user_id)
+    async def list_favorites(self, user_id: str) -> List[str]:
+        user = await self.repository.find_by_id(user_id)
         if not user:
             raise HTTPException(status_code=404, detail="Usuario no encontrado")
         return user.favoritos
 
-    def change_password(self, user_id: str, old_pwd: str, new_pwd: str):
-        # NOTA: Firebase gestiona el cambio de contraseña.
-        # Este método podría quedar obsoleto o redirigir a Firebase.
+    async def change_password(self, user_id: str, old_pwd: str, new_pwd: str):
         raise HTTPException(status_code=400, detail="El cambio de contraseña debe gestionarse a través de Firebase")

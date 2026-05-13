@@ -1,6 +1,6 @@
 from fastapi import Header, HTTPException, Depends
 from typing import Optional
-from sqlmodel import Session
+from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.database import get_session
 from app.repositories.product_repo import ProductRepository
 from app.repositories.user_repo import UserRepository
@@ -18,16 +18,16 @@ _ai_provider = GroqProvider()
 
 # --- REPOSITORY FACTORIES ---
 
-def get_user_repo(session: Session = Depends(get_session)) -> UserRepository:
+def get_user_repo(session: AsyncSession = Depends(get_session)) -> UserRepository:
     return UserRepository(session)
 
-def get_product_repo(session: Session = Depends(get_session)) -> ProductRepository:
+def get_product_repo(session: AsyncSession = Depends(get_session)) -> ProductRepository:
     return ProductRepository(session)
 
-def get_order_repo(session: Session = Depends(get_session)) -> OrderRepository:
+def get_order_repo(session: AsyncSession = Depends(get_session)) -> OrderRepository:
     return OrderRepository(session)
 
-def get_support_repo(session: Session = Depends(get_session)) -> SupportRepository:
+def get_support_repo(session: AsyncSession = Depends(get_session)) -> SupportRepository:
     return SupportRepository(session)
 
 # --- SERVICE FACTORIES ---
@@ -79,7 +79,7 @@ from app.core.firebase import verify_firebase_token
 
 # --- SECURITY DEPENDENCIES ---
 
-def get_current_user(
+async def get_current_user(
     authorization: str = Header(None), 
     required: bool = True,
     user_repo: UserRepository = Depends(get_user_repo)
@@ -103,7 +103,7 @@ def get_current_user(
         firebase_uid = decoded_token.get("uid")
         
         # 2. Buscar usuario en Postgres por firebase_uid
-        user = user_repo.find_by_firebase_uid(firebase_uid)
+        user = await user_repo.find_by_firebase_uid(firebase_uid)
         
         if user:
             return user.model_dump()
@@ -116,14 +116,14 @@ def get_current_user(
             raise HTTPException(status_code=401, detail="Error al validar identidad.")
         return None
 
-def get_current_user_required(
+async def get_current_user_required(
     authorization: str = Header(None),
     user_repo: UserRepository = Depends(get_user_repo)
 ) -> dict:
-    return get_current_user(authorization, required=True, user_repo=user_repo)
+    return await get_current_user(authorization, required=True, user_repo=user_repo)
 
-def get_current_user_optional(
+async def get_current_user_optional(
     authorization: str = Header(None),
     user_repo: UserRepository = Depends(get_user_repo)
 ) -> Optional[dict]:
-    return get_current_user(authorization, required=False, user_repo=user_repo)
+    return await get_current_user(authorization, required=False, user_repo=user_repo)

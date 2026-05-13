@@ -2,6 +2,7 @@ import uuid
 import json
 import re
 import random
+import asyncio
 from datetime import datetime, timezone
 from typing import List, Optional
 from app.ai.providers.groq_provider import GroqProvider
@@ -15,8 +16,8 @@ class AgentService:
         self.ai_provider = ai_provider
         self.product_repo = product_repo
 
-    def _build_system_prompt(self) -> str:
-        products = self.product_repo.list_all_products()
+    async def _build_system_prompt(self) -> str:
+        products = await self.product_repo.list_all_products(limit=50)
         menu_str = "\n".join([
             f"- {p.nombre}: ${p.precio} MXN (Intensidad: {p.intensidad}/5)" 
             for p in products
@@ -36,15 +37,18 @@ class AgentService:
         5. Responde de forma concisa pero atractiva.
         """
 
-    def process_chat(self, user_message: str) -> str:
+    async def process_chat(self, user_message: str) -> str:
         logger.info(f"Processing chat message: {user_message[:50]}...")
-        system_prompt = self._build_system_prompt()
+        system_prompt = await self._build_system_prompt()
         return self.ai_provider.generate_response(system_prompt, user_message)
 
-    def stream_chat(self, user_message: str):
+    async def stream_chat(self, user_message: str):
         logger.info(f"Streaming chat message: {user_message[:50]}...")
-        system_prompt = self._build_system_prompt()
-        yield from self.ai_provider.stream_response(system_prompt, user_message)
+        system_prompt = await self._build_system_prompt()
+        # Nota: GroqProvider.stream_response es un generador síncrono o asíncrono?
+        # Por ahora lo mantenemos asumiendo que es un generador síncrono envuelto en async
+        for chunk in self.ai_provider.stream_response(system_prompt, user_message):
+            yield chunk
 
     def get_chat_history(self, user_id: str) -> List[dict]:
         return [
@@ -58,8 +62,8 @@ class AgentService:
             }
         ]
 
-    def get_personalized_recommendations(self, preferences: List[str]) -> List[dict]:
-        all_products = self.product_repo.list_all_products()
+    async def get_personalized_recommendations(self, preferences: List[str]) -> List[dict]:
+        all_products = await self.product_repo.list_all_products(limit=100)
         recs = []
         for pref in preferences:
             for p in all_products:
@@ -67,17 +71,18 @@ class AgentService:
                     recs.append({"producto": p.model_dump(), "razon": f"Basado en tu gusto por {pref}"})
         return recs[:3]
 
-    def process_quiz(self, answers: dict) -> dict:
+    async def process_quiz(self, answers: dict) -> dict:
+        products = await self.product_repo.list_all_products(limit=2)
         return {
-            "productos_recomendados": [p.model_dump() for p in self.product_repo.list_all_products()[:2]],
+            "productos_recomendados": [p.model_dump() for p in products],
             "explicacion": "Basado en tu preferencia por sabores intensos."
         }
 
-    def get_welcome_message(self) -> dict:
+    async def get_welcome_message(self) -> dict:
         """Orquestra una respuesta de bienvenida donde la IA elige qué productos recomendar."""
         logger.info("IA Barista orquestando bienvenida desde DB.")
         
-        all_products = self.product_repo.list_all_products()
+        all_products = await self.product_repo.list_all_products(limit=50)
         menu_context = "\n".join([
             f"ID: {p.id} | Nombre: {p.nombre} | Intensidad: {p.intensidad}/5 | Precio: ${p.precio}"
             for p in all_products
@@ -111,17 +116,17 @@ class AgentService:
 
             recommendations = []
             for pid in selected_ids:
-                p_data = self.product_repo.find_product_by_id(pid)
+                p_data = await self.product_repo.find_product_by_id(pid)
                 if p_data:
                     recommendations.append(p_data.model_dump())
             
-            if not recommendations:
+            if not recommendations and all_products:
                 recommendations = [p.model_dump() for p in random.sample(all_products, k=min(3, len(all_products)))]
 
         except Exception as e:
             logger.error(f"Error AI orchestration: {e}")
             ai_message = "¡Hola! ¿Listo para un café?"
-            recommendations = [p.model_dump() for p in random.sample(all_products, k=min(3, len(all_products)))]
+            recommendations = [p.model_dump() for p in random.sample(all_products, k=min(3, len(all_products)))] if all_products else []
 
         return {
             "message": ai_message,

@@ -13,7 +13,7 @@ async def checkout(
     current_user: dict = Depends(get_current_user_required)
 ):
     """Finaliza la compra. REQUIERE LOGIN."""
-    return order_service.checkout(current_user["id"], request.addressId, x_idempotency_key)
+    return await order_service.checkout(current_user["id"], request.addressId, x_idempotency_key)
 
 @router.get("/")
 async def list_orders(
@@ -21,7 +21,7 @@ async def list_orders(
     current_user: dict = Depends(get_current_user_required)
 ):
     """Lista historial. REQUIERE LOGIN."""
-    return order_service.order_repo.list_orders_by_user(current_user["id"])
+    return await order_service.order_repo.list_orders_by_user(current_user["id"])
 
 @router.get("/active")
 async def list_active_orders(
@@ -29,7 +29,7 @@ async def list_active_orders(
     current_user: dict = Depends(get_current_user_required)
 ):
     """Lista pedidos en curso. REQUIERE LOGIN."""
-    all_orders = order_service.order_repo.list_orders_by_user(current_user["id"])
+    all_orders = await order_service.order_repo.list_orders_by_user(current_user["id"])
     active_statuses = ["pending", "preparing", "ready", "on_the_way"]
     return [o for o in all_orders if o.status in active_statuses]
 
@@ -40,7 +40,7 @@ async def get_order_detail(
     current_user: dict = Depends(get_current_user_required)
 ):
     """Detalle de pedido específico. REQUIERE LOGIN."""
-    order = order_service.order_repo.find_order_by_id(order_id)
+    order = await order_service.order_repo.find_order_by_id(order_id)
     if not order:
         raise HTTPException(status_code=404, detail="Pedido no encontrado")
     return order
@@ -52,7 +52,7 @@ async def get_order_tracking(
     current_user: dict = Depends(get_current_user_required)
 ):
     """Seguimiento en tiempo real. REQUIERE LOGIN."""
-    order = order_service.order_repo.find_order_by_id(order_id)
+    order = await order_service.order_repo.find_order_by_id(order_id)
     if not order:
         raise HTTPException(status_code=404, detail="Pedido no encontrado")
     return order.tracking
@@ -64,7 +64,7 @@ async def cancel_order(
     current_user: dict = Depends(get_current_user_required)
 ):
     """Cancela un pedido pendiente. REQUIERE LOGIN."""
-    updated = order_service.order_repo.update_order_status(order_id, "cancelled")
+    updated = await order_service.order_repo.update_order_status(order_id, "cancelled")
     if not updated:
         raise HTTPException(status_code=404, detail="Pedido no encontrado")
     return {"message": "Pedido cancelado correctamente"}
