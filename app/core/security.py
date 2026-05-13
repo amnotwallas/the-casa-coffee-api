@@ -6,12 +6,11 @@ api_key_header = APIKeyHeader(name="X-API-KEY", auto_error=False)
 
 def validate_api_key(x_api_key: str = Security(api_key_header)):
     """
-    Valida que la petición incluya una API KEY válida.
-    Útil para proteger recursos internos o limitar el consumo de ancho de banda.
+    Validate that the request includes a valid API Key.
     """
     if x_api_key != settings.ADMIN_SECRET_TOKEN:
         raise HTTPException(
             status_code=403,
-            detail="Acceso denegado: API Key inválida"
+            detail="Access denied: Invalid API Key"
         )
     return x_api_key

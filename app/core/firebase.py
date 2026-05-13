@@ -7,29 +7,31 @@ import os
 logger = get_logger(__name__)
 
 def init_firebase():
-    """Inicializa Firebase Admin SDK."""
+    """
+    Initialize the Firebase Admin SDK.
+    """
     try:
         if not firebase_admin._apps:
             if settings.FIREBASE_CREDENTIALS and os.path.exists(settings.FIREBASE_CREDENTIALS):
                 cred = credentials.Certificate(settings.FIREBASE_CREDENTIALS)
                 firebase_admin.initialize_app(cred)
-                logger.info("Firebase Admin inicializado con service account.")
+                logger.info("Firebase Admin initialized with service account.")
             else:
-                # Intenta inicializar con credenciales por defecto (útil en entornos como GCP)
-                # o simplemente falla si no hay configuración
                 try:
+                    # Attempt to initialize with default credentials (useful for GCP environments)
                     firebase_admin.initialize_app()
-                    logger.info("Firebase Admin inicializado con credenciales por defecto.")
+                    logger.info("Firebase Admin initialized with default credentials.")
                 except Exception:
-                    logger.warning("No se detectó FIREBASE_CREDENTIALS. La validación de tokens fallará.")
+                    logger.warning("FIREBASE_CREDENTIALS not found. Token validation will fail.")
     except Exception as e:
-        logger.error(f"Error al inicializar Firebase: {e}")
+        logger.error(f"Failed to initialize Firebase: {e}")
 
 def verify_firebase_token(token: str) -> dict:
-    """Verifica un token de Firebase y retorna el payload decodificado."""
+    """
+    Verify a Firebase ID token and return the decoded payload.
+    """
     try:
-        decoded_token = auth.verify_id_token(token)
-        return decoded_token
+        return auth.verify_id_token(token)
     except Exception as e:
-        logger.error(f"Error al verificar token de Firebase: {e}")
+        logger.error(f"Failed to verify Firebase token: {e}")
         return None

@@ -8,16 +8,25 @@ from datetime import datetime
 logger = get_logger(__name__)
 
 class SupportRepository:
+    """
+    Data access layer for Support-related entities (Reviews, Promos, Notifications).
+    """
     def __init__(self, session: AsyncSession):
         self.session = session
 
     # --- REVIEWS ---
     async def list_reviews_by_product(self, product_id: str) -> List[Review]:
+        """
+        Retrieve all reviews for a specific product.
+        """
         statement = select(Review).where(Review.product_id == product_id)
         result = await self.session.execute(statement)
         return result.scalars().all()
 
     async def add_review(self, product_id: str, review_data: dict) -> Review:
+        """
+        Persist a new product review.
+        """
         review = Review(product_id=product_id, **review_data)
         self.session.add(review)
         await self.session.commit()
@@ -25,6 +34,9 @@ class SupportRepository:
         return review
 
     async def mark_review_helpful(self, review_id: str) -> Optional[int]:
+        """
+        Increment the helpful counter for a review.
+        """
         review = await self.session.get(Review, review_id)
         if review:
             review.helpful_count += 1
@@ -34,8 +46,11 @@ class SupportRepository:
             return review.helpful_count
         return None
 
-    # --- PROMOCIONES ---
+    # --- PROMOTIONS ---
     async def list_promotions(self, active_only: bool = True) -> List[Promotion]:
+        """
+        Retrieve available promotions.
+        """
         statement = select(Promotion)
         if active_only:
             statement = statement.where(Promotion.activo == True)
@@ -43,15 +58,24 @@ class SupportRepository:
         return result.scalars().all()
 
     async def find_promotion_by_id(self, promo_id: str) -> Optional[Promotion]:
+        """
+        Find a promotion by its ID.
+        """
         return await self.session.get(Promotion, promo_id)
 
-    # --- NOTIFICACIONES ---
+    # --- NOTIFICATIONS ---
     async def list_notifications(self, user_id: str) -> List[Notification]:
+        """
+        Get all notifications for a specific user, ordered by newest.
+        """
         statement = select(Notification).where(Notification.user_id == user_id).order_by(Notification.fecha.desc())
         result = await self.session.execute(statement)
         return result.scalars().all()
 
     async def mark_notification_read(self, user_id: str, notif_id: str) -> bool:
+        """
+        Mark a single notification as read.
+        """
         statement = select(Notification).where(Notification.id == notif_id, Notification.user_id == user_id)
         result = await self.session.execute(statement)
         notification = result.scalars().first()
@@ -63,6 +87,9 @@ class SupportRepository:
         return False
 
     async def mark_all_notifications_read(self, user_id: str):
+        """
+        Mark all unread notifications for a user as read.
+        """
         statement = select(Notification).where(Notification.user_id == user_id, Notification.leida == False)
         result = await self.session.execute(statement)
         notifications = result.scalars().all()
@@ -71,16 +98,25 @@ class SupportRepository:
             self.session.add(n)
         await self.session.commit()
 
-    # --- INFO ---
+    # --- STORE INFO & FAQ ---
     async def get_faq(self) -> List[FAQ]:
+        """
+        Retrieve all FAQ items.
+        """
         statement = select(FAQ)
         result = await self.session.execute(statement)
         return result.scalars().all()
     
     async def get_store_info(self) -> Optional[StoreInfo]:
+        """
+        Retrieve store-wide settings and information.
+        """
         return await self.session.get(StoreInfo, 1)
 
     async def update_store_info(self, info_data: dict) -> StoreInfo:
+        """
+        Update global store information.
+        """
         store_info = await self.get_store_info()
         if not store_info:
             store_info = StoreInfo(id=1, **info_data)
@@ -94,4 +130,7 @@ class SupportRepository:
         return store_info
 
     async def get_menu_of_day(self) -> dict:
-        return {"titulo": "Especial del Día", "productos": []}
+        """
+        Retrieve the special menu or product of the day.
+        """
+        return {"title": "Daily Special", "products": []}

@@ -16,6 +16,9 @@ async def list_products(
     limit: int = Query(10, ge=1, le=100),
     product_service: ProductService = Depends(get_product_service)
 ):
+    """
+    Retrieve a paginated list of products with optional filters.
+    """
     products = await product_service.get_all_products(
         category=category, 
         search=search, 
@@ -27,10 +30,16 @@ async def list_products(
 
 @router.get("/categories")
 async def get_categories(product_service: ProductService = Depends(get_product_service)):
+    """
+    Get a list of all available product categories.
+    """
     return await product_service.get_categories()
 
 @router.get("/featured", response_model=List[Product])
 async def get_featured(product_service: ProductService = Depends(get_product_service)):
+    """
+    Retrieve products highlighted for the featured section.
+    """
     return await product_service.get_featured_products()
 
 @router.get("/search")
@@ -40,6 +49,9 @@ async def search_products(
     limit: int = Query(10, ge=1, le=100),
     product_service: ProductService = Depends(get_product_service)
 ):
+    """
+    Search for products by name or description.
+    """
     results = await product_service.get_all_products(search=q, page=page, limit=limit)
     total = await product_service.get_total_count(search=q)
     return {"results": results, "count": total}
@@ -49,9 +61,12 @@ async def get_product(
     product_id: str,
     product_service: ProductService = Depends(get_product_service)
 ):
+    """
+    Retrieve detailed information for a specific product.
+    """
     product = await product_service.get_product_by_id(product_id)
     if not product:
-        raise HTTPException(status_code=404, detail="Producto no encontrado")
+        raise HTTPException(status_code=404, detail="Product not found")
     return product
 
 @router.get("/{product_id}/reviews", response_model=ProductReviewsResponse)
@@ -59,6 +74,9 @@ async def list_reviews(
     product_id: str,
     support_service: SupportService = Depends(get_support_service)
 ):
+    """
+    List all customer reviews for a specific product.
+    """
     return await support_service.get_product_reviews(product_id)
 
 @router.post("/{product_id}/reviews", response_model=Review, status_code=201)
@@ -68,7 +86,9 @@ async def add_review(
     support_service: SupportService = Depends(get_support_service),
     current_user: dict = Depends(get_current_user_required)
 ):
-    """Añade una reseña usando la identidad real del usuario logueado."""
+    """
+    Submit a new review for a product. Requires authentication.
+    """
     return await support_service.add_product_review(
         product_id=product_id,
         user_id=current_user["id"],

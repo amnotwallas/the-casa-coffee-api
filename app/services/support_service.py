@@ -7,11 +7,17 @@ from fastapi import HTTPException
 logger = get_logger(__name__)
 
 class SupportService:
+    """
+    Service layer for customer support, reviews, and store info.
+    """
     def __init__(self, repository: SupportRepository):
         self.repository = repository
 
     # --- REVIEWS ---
     async def get_product_reviews(self, product_id: str) -> schema.ProductReviewsResponse:
+        """
+        Get formatted reviews and aggregate rating for a product.
+        """
         reviews_models = await self.repository.list_reviews_by_product(product_id)
         
         reviews_schemas = []
@@ -38,7 +44,10 @@ class SupportService:
         )
 
     async def add_product_review(self, product_id: str, user_id: str, user_name: str, review_in: schema.ReviewCreate) -> schema.Review:
-        logger.info(f"Usuario {user_name} agregando reseña a producto {product_id}")
+        """
+        Add a new review using the authenticated user's identity.
+        """
+        logger.info(f"User {user_name} adding review to product {product_id}")
         review_data = {
             "user_id": user_id,
             "user_name": user_name,
@@ -60,13 +69,19 @@ class SupportService:
         )
 
     async def mark_review_helpful(self, review_id: str) -> int:
+        """
+        Mark a review as helpful and return new count.
+        """
         count = await self.repository.mark_review_helpful(review_id)
         if count is None:
-            raise HTTPException(status_code=404, detail="Reseña no encontrada")
+            raise HTTPException(status_code=404, detail="Review not found")
         return count
 
-    # --- PROMOCIONES ---
+    # --- PROMOTIONS ---
     async def get_active_promotions(self) -> List[schema.Promotion]:
+        """
+        Get all currently active promotions.
+        """
         promos = await self.repository.list_promotions()
         return [
             schema.Promotion(
@@ -80,9 +95,12 @@ class SupportService:
         ]
 
     async def get_promotion_by_id(self, promo_id: str) -> schema.Promotion:
+        """
+        Get specific promotion details.
+        """
         p = await self.repository.find_promotion_by_id(promo_id)
         if not p:
-            raise HTTPException(status_code=404, detail="Promoción no encontrada")
+            raise HTTPException(status_code=404, detail="Promotion not found")
         return schema.Promotion(
             id=p.id,
             titulo=p.titulo,
@@ -92,8 +110,11 @@ class SupportService:
             imagen=p.imagen
         )
 
-    # --- NOTIFICACIONES ---
+    # --- NOTIFICATIONS ---
     async def get_user_notifications(self, user_id: str) -> List[schema.Notification]:
+        """
+        Retrieve all notifications for a user.
+        """
         notifs = await self.repository.list_notifications(user_id)
         return [
             schema.Notification(
@@ -107,14 +128,23 @@ class SupportService:
         ]
 
     async def mark_notification_read(self, user_id: str, notif_id: str):
+        """
+        Mark a specific notification as read.
+        """
         if not await self.repository.mark_notification_read(user_id, notif_id):
-            raise HTTPException(status_code=404, detail="Notificación no encontrada")
+            raise HTTPException(status_code=404, detail="Notification not found")
 
     async def mark_all_as_read(self, user_id: str):
+        """
+        Mark all user notifications as read.
+        """
         await self.repository.mark_all_notifications_read(user_id)
 
-    # --- INFO ---
+    # --- STORE INFO & FAQ ---
     async def get_store_hours(self) -> schema.StoreHours:
+        """
+        Get current store hours and operational status.
+        """
         info = await self.repository.get_store_info()
         if not info:
              return schema.StoreHours(
@@ -131,23 +161,38 @@ class SupportService:
         )
 
     async def get_full_store_info(self) -> dict:
+        """
+        Get full store metadata.
+        """
         info = await self.repository.get_store_info()
         return info.model_dump() if info else {}
 
     async def get_faqs(self) -> List[schema.FAQ]:
+        """
+        Get all FAQs.
+        """
         faqs = await self.repository.get_faq()
         return [schema.FAQ(pregunta=f.pregunta, respuesta=f.respuesta, categoria=f.categoria) for f in faqs]
 
     async def get_menu_of_day(self) -> dict:
+        """
+        Get the special menu of the day.
+        """
         return await self.repository.get_menu_of_day()
 
 class AdminService:
+    """
+    Service layer for administrative operations and analytics.
+    """
     def __init__(self, support_repo: SupportRepository, product_repo: any, order_repo: any):
         self.support_repo = support_repo
         self.product_repo = product_repo
         self.order_repo = order_repo
 
     async def get_analytics(self) -> dict:
+        """
+        Gather system-wide analytics for the admin dashboard.
+        """
         orders = await self.order_repo.list_orders_by_user("admin")
         total_ventas = sum(o.total for o in orders)
         
@@ -160,24 +205,39 @@ class AdminService:
         }
 
     async def create_product(self, product_in: any) -> dict:
+        """
+        Create a new product record.
+        """
         product = await self.product_repo.create_product(product_in.model_dump())
         return product.model_dump()
 
     async def update_product(self, product_id: str, update_data: dict) -> dict:
+        """
+        Update an existing product record.
+        """
         updated = await self.product_repo.update_product(product_id, update_data)
         if not updated:
-            raise HTTPException(status_code=404, detail="Producto no encontrado")
+            raise HTTPException(status_code=404, detail="Product not found")
         return updated.model_dump()
 
     async def delete_product(self, product_id: str):
+        """
+        Delete a product record.
+        """
         if not await self.product_repo.delete_product(product_id):
-            raise HTTPException(status_code=404, detail="Producto no encontrado")
+            raise HTTPException(status_code=404, detail="Product not found")
 
     async def list_all_orders(self) -> List[dict]:
+        """
+        Retrieve all orders for administrative review.
+        """
         orders = await self.order_repo.list_orders_by_user("admin")
         return [o.model_dump() for o in orders]
 
     async def update_order_status(self, order_id: str, status: str) -> dict:
+        """
+        Update order status and tracking information.
+        """
         tracking_map = {
             "preparing": {"preparando": True},
             "ready": {"listo": True},
@@ -186,5 +246,5 @@ class AdminService:
         }
         updated = await self.order_repo.update_order_status(order_id, status, tracking_map.get(status))
         if not updated:
-            raise HTTPException(status_code=404, detail="Pedido no encontrado")
+            raise HTTPException(status_code=404, detail="Order not found")
         return updated.model_dump()
