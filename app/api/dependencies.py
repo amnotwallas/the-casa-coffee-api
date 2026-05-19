@@ -9,7 +9,8 @@ from app.repositories.support_repo import SupportRepository
 from app.services.product_service import ProductService
 from app.services.user_service import AuthService, UserService
 from app.services.order_service import CartService, OrderService
-from app.services.support_service import SupportService, AdminService
+from app.services.support_service import SupportService
+from app.services.admin_service import AdminService
 from app.ai.providers.groq_provider import GroqProvider
 from app.ai.services.agent_service import AgentService
 from app.core.firebase import verify_firebase_token
@@ -74,12 +75,19 @@ def get_cart_service(
 
 def get_order_service(
     order_repo: OrderRepository = Depends(get_order_repo), 
-    cart_service: CartService = Depends(get_cart_service)
+    cart_service: CartService = Depends(get_cart_service),
+    user_repo: UserRepository = Depends(get_user_repo),
+    product_repo: ProductRepository = Depends(get_product_repo)
 ) -> OrderService:
     """
-    Factory for OrderService.
+    Factory for OrderService with required dependencies.
     """
-    return OrderService(order_repo=order_repo, cart_service=cart_service)
+    return OrderService(
+        order_repo=order_repo, 
+        cart_service=cart_service, 
+        user_repo=user_repo,
+        product_repo=product_repo
+    )
 
 def get_support_service(repo: SupportRepository = Depends(get_support_repo)) -> SupportService:
     """

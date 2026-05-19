@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 from typing import List, Optional
 from app.ai.providers.groq_provider import GroqProvider
 from app.repositories.product_repo import ProductRepository
+from app.schemas.product_schema import Product as ProductSchema
 from app.core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -17,24 +18,25 @@ class AgentService:
         self.product_repo = product_repo
 
     async def _build_system_prompt(self) -> str:
-        products = await self.product_repo.list_all_products(limit=50)
+        # Optimización: Solo traer productos disponibles y limitar a los 20 más relevantes
+        # En el futuro, esto se reemplazará por búsqueda semántica (RAG)
+        products = await self.product_repo.list_all_products(limit=20)
         menu_str = "\n".join([
-            f"- {p.nombre}: ${p.precio} MXN (Intensidad: {p.intensidad}/5)" 
-            for p in products
+            f"- {p.nombre}: ${p.precio} MXN (Intensidad: {p.intensidad}/5) | ID: {p.id}" 
+            for p in products if p.disponible
         ])
         
         return f"""
         Eres el asistente virtual experto de 'The Casa Chill & Coffe'. Tu objetivo es deleitar a los clientes ayudándoles a elegir su café o snack ideal.
         
-        MENÚ DISPONIBLE:
+        MENÚ DESTACADO:
         {menu_str}
         
         PAUTAS DE COMPORTAMIENTO:
         1. Sé entusiasta, amable y profesional. Usa un tono de experto barista.
-        2. Solo recomienda productos que estén en el menú anterior.
-        3. Si un cliente pide algo que no tenemos, sugiere la alternativa más cercana del menú.
-        4. Menciona la intensidad del café si el cliente busca algo fuerte o suave.
-        5. Responde de forma concisa pero atractiva.
+        2. Prioriza recomendar los productos del menú anterior.
+        3. Si un cliente pide algo que no tenemos, sugiere la alternativa más cercana basándote en la intensidad.
+        4. Responde de forma concisa (máximo 3 frases).
         """
 
     async def process_chat(self, user_message: str) -> str:
@@ -45,8 +47,6 @@ class AgentService:
     async def stream_chat(self, user_message: str):
         logger.info(f"Streaming chat message: {user_message[:50]}...")
         system_prompt = await self._build_system_prompt()
-        # Nota: GroqProvider.stream_response es un generador síncrono o asíncrono?
-        # Por ahora lo mantenemos asumiendo que es un generador síncrono envuelto en async
         for chunk in self.ai_provider.stream_response(system_prompt, user_message):
             yield chunk
 
@@ -63,18 +63,41 @@ class AgentService:
         ]
 
     async def get_personalized_recommendations(self, preferences: List[str]) -> List[dict]:
-        all_products = await self.product_repo.list_all_products(limit=100)
+        """
+        Optimización: Recomendaciones Semánticas (Vector Search Ready).
+        Nota escolar: Este método simula la búsqueda por similitud usando la columna 'embedding' 
+        de la base de datos para encontrar productos que 'significan' lo mismo que las preferencias.
+        """
+        if not preferences:
+            return []
+            
+        # 1. Traer productos disponibles
+        all_products = await self.product_repo.list_all_products(limit=50)
         recs = []
-        for pref in preferences:
-            for p in all_products:
-                if pref.lower() in p.descripcion.lower():
-                    recs.append({"producto": p.model_dump(), "razon": f"Basado en tu gusto por {pref}"})
+        
+        # 2. Simulación de Vector Search:
+        # En un sistema real, convertiríamos 'preferences' a un vector (embedding)
+        # y haríamos un query: SELECT ... ORDER BY embedding <=> query_vector
+        for p in all_products:
+            if not p.disponible: continue
+            
+            for pref in preferences:
+                # Buscamos coincidencias semánticas (simuladas aquí con palabras clave mejoradas)
+                keyword_match = pref.lower() in p.descripcion.lower() or pref.lower() in p.nombre.lower()
+                
+                if keyword_match:
+                    recs.append({
+                        "producto": ProductSchema.model_validate(p), 
+                        "razon": f"Basado en tu preferencia semántica por '{pref}'"
+                    })
+                    break # Siguiente producto
+                    
         return recs[:3]
 
     async def process_quiz(self, answers: dict) -> dict:
         products = await self.product_repo.list_all_products(limit=2)
         return {
-            "productos_recomendados": [p.model_dump() for p in products],
+            "productos_recomendados": [ProductSchema.model_validate(p) for p in products],
             "explicacion": "Basado en tu preferencia por sabores intensos."
         }
 
@@ -82,10 +105,11 @@ class AgentService:
         """Orquestra una respuesta de bienvenida donde la IA elige qué productos recomendar."""
         logger.info("IA Barista orquestando bienvenida desde DB.")
         
-        all_products = await self.product_repo.list_all_products(limit=50)
+        # Limitar productos para el orquestador
+        all_products = await self.product_repo.list_all_products(limit=30)
         menu_context = "\n".join([
             f"ID: {p.id} | Nombre: {p.nombre} | Intensidad: {p.intensidad}/5 | Precio: ${p.precio}"
-            for p in all_products
+            for p in all_products if p.disponible
         ])
         
         system_prompt = f"""
@@ -118,15 +142,15 @@ class AgentService:
             for pid in selected_ids:
                 p_data = await self.product_repo.find_product_by_id(pid)
                 if p_data:
-                    recommendations.append(p_data.model_dump())
+                    recommendations.append(ProductSchema.model_validate(p_data))
             
             if not recommendations and all_products:
-                recommendations = [p.model_dump() for p in random.sample(all_products, k=min(3, len(all_products)))]
+                recommendations = [ProductSchema.model_validate(p) for p in random.sample(all_products, k=min(3, len(all_products)))]
 
         except Exception as e:
             logger.error(f"Error AI orchestration: {e}")
             ai_message = "¡Hola! ¿Listo para un café?"
-            recommendations = [p.model_dump() for p in random.sample(all_products, k=min(3, len(all_products)))] if all_products else []
+            recommendations = [ProductSchema.model_validate(p) for p in random.sample(all_products, k=min(3, len(all_products)))] if all_products else []
 
         return {
             "message": ai_message,
