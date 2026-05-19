@@ -1,4 +1,8 @@
 {
+  "categories": [
+    { "id": 1, "nombre": "Bebidas Frías" },
+    { "id": 2, "nombre": "Cafés" }
+  ],
   "store_info": {
     "nombre": "The Casa Chill & Coffe - Roma Norte",
     "direccion": "Colima 123, Roma Norte, CDMX, 06700",
@@ -30,15 +34,12 @@
       "precio": 89.0,
       "intensidad": 3,
       "imagenes": ["espresso.png"],
-      "categoria": {
-        "id": "cat-cold",
-        "nombre": "Bebidas Frías"
-      },
+      "category_id": 1,
       "ingredientes": ["Espresso", "Chocolate blanco", "Leche"],
       "valores_nutricionales": {
-        "calorias": "420 kcal",
-        "grasas": "18g",
-        "proteinas": "6g"
+        "calorias": 420,
+        "grasas": 18.0,
+        "proteinas": 6.0
       },
       "personalizaciones": [
         {
@@ -75,15 +76,12 @@
       "precio": 35.0,
       "intensidad": 5,
       "imagenes": ["espresso.png"],
-      "categoria": {
-        "id": "cat-hot",
-        "nombre": "Cafés"
-      },
+      "category_id": 2,
       "ingredientes": ["Café de altura"],
       "valores_nutricionales": {
-        "calorias": "2 kcal",
-        "grasas": "0g",
-        "proteinas": "0.2g"
+        "calorias": 2,
+        "grasas": 0.0,
+        "proteinas": 0.2
       },
       "personalizaciones": [],
       "rating_avg": 4.9,
@@ -97,15 +95,12 @@
       "precio": 42.0,
       "intensidad": 4,
       "imagenes": ["espresso.png"],
-      "categoria": {
-        "id": "cat-hot",
-        "nombre": "Cafés"
-      },
+      "category_id": 2,
       "ingredientes": ["Espresso", "Agua purificada"],
       "valores_nutricionales": {
-        "calorias": "5 kcal",
-        "grasas": "0g",
-        "proteinas": "0.5g"
+        "calorias": 5,
+        "grasas": 0.0,
+        "proteinas": 0.5
       },
       "personalizaciones": [
         {
@@ -133,15 +128,12 @@
       "precio": 68.0,
       "intensidad": 3,
       "imagenes": ["espresso.png"],
-      "categoria": {
-        "id": "cat-hot",
-        "nombre": "Cafés"
-      },
+      "category_id": 2,
       "ingredientes": ["Espresso", "Leche", "Jarabe de vainilla"],
       "valores_nutricionales": {
-        "calorias": "190 kcal",
-        "grasas": "7g",
-        "proteinas": "8g"
+        "calorias": 190,
+        "grasas": 7.0,
+        "proteinas": 8.0
       },
       "personalizaciones": [
         {
@@ -169,15 +161,12 @@
       "precio": 65.0,
       "intensidad": 3,
       "imagenes": ["espresso.png"],
-      "categoria": {
-        "id": "cat-hot",
-        "nombre": "Cafés"
-      },
+      "category_id": 2,
       "ingredientes": ["Espresso", "Leche vaporizada", "Espuma de leche"],
       "valores_nutricionales": {
-        "calorias": "120 kcal",
-        "grasas": "5g",
-        "proteinas": "6g"
+        "calorias": 120,
+        "grasas": 5.0,
+        "proteinas": 6.0
       },
       "personalizaciones": [],
       "rating_avg": 4.8,
@@ -186,15 +175,19 @@
     }
   ],
   "users": [
-    {
-      "id": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-      "nombre": "Juan Pérez Actualizado",
-      "email": "juan.perez@example.com",
-      "password": "hashed_password_123",
-      "telefono": "+525512345678",
-      "refreshToken": "refresh_mock_f47ac10b-58cc-4372-a567-0e02b2c3d479",
+        {
+      "nombre": "Admin",
+      "email": "admin@thecasa.com",
+      "password": "Password123!",
+      "telefono": "+525511223344",
+      "id": "ecdb241b-5a65-490f-9a5a-bafc4f1b391e",
       "direcciones": [],
-      "favoritos": []
+      "favoritos": [],
+      "preferencias": {
+        "notificacionesPush": true,
+        "tipoLecheFavorita": "Almendra",
+        "idioma": "es"
+      }
     },
     {
       "nombre": "Estudiante Test",
