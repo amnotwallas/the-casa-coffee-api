@@ -1,29 +1,67 @@
 {
   "info": {
     "_postman_id": "coffee-api-admin-v1",
-    "name": "The Casa Chill & Coffe - ADMIN DASHBOARD",
-    "description": "Colección para administración. Requiere X-Admin-Token.",
+    "name": "The Casa Chill & Coffe - ADMIN MASTER",
+    "description": "Colección MAESTRA de Administración (Seguridad RBAC). Usa la variable auth_token_admin para todas las peticiones.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "Dashboard & Analytics",
+      "name": "0. Autenticación Admin",
       "item": [
         {
-          "name": "Ver Analíticas",
+          "name": "Login Admin (Firebase)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.user && jsonData.user.is_admin) {",
+                  "    // Tomamos el token directamente del body que tú enviaste",
+                  "    var requestBody = JSON.parse(pm.request.body.raw);",
+                  "    var token = requestBody.firebase_token;",
+                  "    pm.collectionVariables.set(\"auth_token_admin\", token);",
+                  "    pm.environment.set(\"auth_token_admin\", token);",
+                  "    console.log('✅ auth_token_admin actualizado correctamente');",
+                  "} else {",
+                  "    console.warn('⚠️ Usuario no es admin o error de login');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"firebase_token\": \"{{auth_token_admin}}\",\n    \"nombre\": \"Admin\"\n}",
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/auth/login"
+          }
+        }
+      ]
+    },
+    {
+      "name": "1. Dashboard & Analytics",
+      "item": [
+        {
+          "name": "Ver Analíticas Hoy",
           "request": {
             "method": "GET",
-            "header": [],
             "url": "{{base_url}}/admin/analytics"
           }
         }
       ]
     },
     {
-      "name": "Gestión de Catálogo",
+      "name": "2. Gestión de Catálogo",
       "item": [
         {
-          "name": "Listar Productos (Admin)",
+          "name": "Listar Todos (y capturar ID)",
           "event": [
             {
               "listen": "test",
@@ -32,7 +70,6 @@
                   "var jsonData = pm.response.json();",
                   "if (jsonData.data && jsonData.data.length > 0) {",
                   "    pm.collectionVariables.set(\"last_admin_product_id\", jsonData.data[0].id);",
-                  "    console.log('Admin Product ID guardado:', jsonData.data[0].id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -45,7 +82,7 @@
           }
         },
         {
-          "name": "Crear Producto",
+          "name": "Crear Nuevo Producto",
           "event": [
             {
               "listen": "test",
@@ -54,7 +91,7 @@
                   "var jsonData = pm.response.json();",
                   "if (jsonData.id) {",
                   "    pm.collectionVariables.set(\"last_admin_product_id\", jsonData.id);",
-                  "    console.log('Admin Product ID guardado:', jsonData.id);",
+                  "    pm.environment.set(\"last_admin_product_id\", jsonData.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -63,15 +100,11 @@
           ],
           "request": {
             "method": "POST",
-            "header": [],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"id\": \"latte-vainilla-001\",\n    \"nombre\": \"Latte de Vainilla\",\n    \"descripcion\": \"Café espresso con leche vaporizada y jarabe de vainilla\",\n    \"precio\": 65.0,\n    \"intensidad\": 2,\n    \"imagenes\": [\"latte_vainilla.png\"],\n    \"categoria\": {\n        \"id\": \"bebidas_calientes\",\n        \"nombre\": \"Bebidas Calientes\"\n    },\n    \"ingredientes\": [\"Espresso\", \"Leche\", \"Jarabe de Vainilla\"],\n    \"valores_nutricionales\": {\n        \"calorias\": \"150 kcal\",\n        \"proteinas\": \"8g\",\n        \"grasas\": \"5g\",\n        \"carbohidratos\": \"20g\"\n    },\n    \"personalizaciones\": [\n        {\n            \"tipo\": \"Leche\",\n            \"opciones\": [\n                {\"nombre\": \"Entera\", \"extra_precio\": 0},\n                {\"nombre\": \"Almendra\", \"extra_precio\": 10}\n            ]\n        }\n    ],\n    \"reviews_count\": 0,\n    \"rating_avg\": 0.0,\n    \"disponible\": true\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n    \"id\": \"latte-auto-{{$randomInt}}\",\n    \"nombre\": \"Café Especial Admin\",\n    \"descripcion\": \"Creado desde el Dashboard\",\n    \"precio\": 65.0,\n    \"intensidad\": 3,\n    \"imagenes\": [\"espresso.png\"],\n    \"category_id\": 2,\n    \"ingredientes\": [\"Calidad Admin\"],\n    \"valores_nutricionales\": {\n        \"calorias\": 100,\n        \"proteinas\": 5.0,\n        \"grasas\": 2.0,\n        \"carbohidratos\": 10.0\n    },\n    \"personalizaciones\": [],\n    \"reviews_count\": 0,\n    \"rating_avg\": 0.0,\n    \"disponible\": true\n}",
+              "options": { "raw": { "language": "json" } }
             },
             "url": "{{base_url}}/admin/products"
           }
@@ -80,15 +113,11 @@
           "name": "Actualizar Producto",
           "request": {
             "method": "PATCH",
-            "header": [],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"precio\": 68.0,\n    \"disponible\": true\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "raw": "{\n    \"precio\": 72.0,\n    \"disponible\": true\n}",
+              "options": { "raw": { "language": "json" } }
             },
             "url": "{{base_url}}/admin/products/{{last_admin_product_id}}"
           }
@@ -103,7 +132,7 @@
       ]
     },
     {
-      "name": "Gestión de Pedidos",
+      "name": "3. Gestión de Pedidos",
       "item": [
         {
           "name": "Listar Todos los Pedidos",
@@ -113,9 +142,8 @@
               "script": {
                 "exec": [
                   "var jsonData = pm.response.json();",
-                  "if (jsonData.length > 0) {",
+                  "if (jsonData && jsonData.length > 0) {",
                   "    pm.collectionVariables.set(\"last_admin_order_id\", jsonData[0].id);",
-                  "    console.log('Admin Order ID guardado:', jsonData[0].id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -128,18 +156,27 @@
           }
         },
         {
-          "name": "Actualizar Estado de Pedido",
+          "name": "Avanzar a 'Preparando'",
           "request": {
             "method": "PATCH",
-            "header": [],
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
               "raw": "{\n    \"status\": \"preparing\"\n}",
-              "options": {
-                "raw": {
-                  "language": "json"
-                }
-              }
+              "options": { "raw": { "language": "json" } }
+            },
+            "url": "{{base_url}}/admin/orders/{{last_admin_order_id}}/status"
+          }
+        },
+        {
+          "name": "Marcar como 'Listo'",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"status\": \"ready\"\n}",
+              "options": { "raw": { "language": "json" } }
             },
             "url": "{{base_url}}/admin/orders/{{last_admin_order_id}}/status"
           }
@@ -148,30 +185,19 @@
     }
   ],
   "auth": {
-    "type": "apikey",
-    "apikey": [
+    "type": "bearer",
+    "bearer": [
       {
-        "key": "value",
-        "value": "{{admin_token}}",
-        "type": "string"
-      },
-      {
-        "key": "key",
-        "value": "X-Admin-Token",
+        "key": "token",
+        "value": "{{auth_token_admin}}",
         "type": "string"
       }
     ]
   },
   "variable": [
-    {
-      "key": "base_url",
-      "value": "http://localhost:8000/api/v1",
-      "type": "string"
-    },
-    {
-      "key": "admin_token",
-      "value": "dev_admin_token_placeholder",
-      "type": "string"
-    }
+    { "key": "base_url", "value": "http://localhost:8000/api/v1" },
+    { "key": "auth_token_admin", "value": "" },
+    { "key": "last_admin_product_id", "value": "" },
+    { "key": "last_admin_order_id", "value": "" }
   ]
 }
