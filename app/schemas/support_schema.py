@@ -1,4 +1,4 @@
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 from typing import List, Optional
 from datetime import datetime
 
@@ -51,3 +51,22 @@ class StoreHours(BaseModel):
     estaAbierto: bool
     tiempo_espera_actual: int
     volumen_pedidos: str
+    
+    model_config = {"from_attributes": True}
+
+    @model_validator(mode="before")
+    @classmethod
+    def map_horarios(cls, data: any):
+        """Mapea horarios a la lista de horarios."""
+        if hasattr(data, "horarios"):
+            data_dict = data.__dict__.copy()
+            data_dict["horarios"] = [
+                {
+                    "dia": h.dia,
+                    "apertura": h.apertura,
+                    "cierre": h.cierre,
+                    "abierto": h.abierto
+                } for h in data.horarios
+            ]
+            return data_dict
+        return data

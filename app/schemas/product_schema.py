@@ -1,25 +1,25 @@
-from pydantic import BaseModel, field_validator
-from typing import List, Optional
+from pydantic import BaseModel, field_validator, model_validator
+from typing import List, Optional, Dict, Any
 from app.core.config import settings
 
 class Category(BaseModel):
-    id: str
+    id: int
     nombre: str
 
 class CustomizationOption(BaseModel):
     nombre: str
     extra_precio: float
-    valor: Optional[int] = None
+    valor: Optional[str] = None
 
 class Customization(BaseModel):
     tipo: str
     opciones: List[CustomizationOption]
 
 class NutritionalValues(BaseModel):
-    calorias: str
-    proteinas: str
-    grasas: str
-    carbohidratos: Optional[str] = None
+    calorias: int
+    proteinas: float
+    grasas: float
+    carbohidratos: Optional[float] = None
 
 class Product(BaseModel):
     id: str
@@ -28,13 +28,73 @@ class Product(BaseModel):
     precio: float
     intensidad: int
     imagenes: List[str]
-    categoria: Category
+    categoria: Optional[Category] = None
     ingredientes: List[str]
-    valores_nutricionales: NutritionalValues
-    personalizaciones: List[Customization]
+    valores_nutricionales: Optional[NutritionalValues] = None
+    personalizaciones: Optional[List[Customization]] = None
+
     reviews_count: int
     rating_avg: float
     disponible: bool
+
+    model_config = {"from_attributes": True}
+
+    @model_validator(mode="before")
+    @classmethod
+    def map_relational_data(cls, data: any):
+        """Mapea relaciones de BD a campos JSON para compatibilidad."""
+        # Si es un objeto de base de datos (tiene atributos)
+        if not isinstance(data, dict):
+            # Reconstruir el objeto como un diccionario para Pydantic
+            data_dict = {}
+            
+            # Copiar campos básicos que están en el modelo
+            for field in cls.model_fields:
+                if field not in ["categoria", "valores_nutricionales", "personalizaciones"]:
+                    data_dict[field] = getattr(data, field, None)
+
+            # Mapear Categoría
+            categoria = getattr(data, "categoria", None)
+            if categoria:
+                data_dict["categoria"] = {
+                    "id": categoria.id,
+                    "nombre": categoria.nombre
+                }
+            else:
+                data_dict["categoria"] = None
+            
+            # Mapear Nutrición
+            nutricion = getattr(data, "valores_nutricionales", None)
+            if nutricion:
+                data_dict["valores_nutricionales"] = {
+                    "calorias": nutricion.calorias,
+                    "proteinas": nutricion.proteinas,
+                    "grasas": nutricion.grasas,
+                    "carbohidratos": nutricion.carbohidratos
+                }
+            else:
+                data_dict["valores_nutricionales"] = None
+            
+            # Mapear Personalizaciones
+            personalizaciones = getattr(data, "personalizaciones", [])
+            if personalizaciones:
+                data_dict["personalizaciones"] = [
+                    {
+                        "tipo": cust.tipo,
+                        "opciones": [
+                            {
+                                "nombre": opt.nombre,
+                                "extra_precio": opt.extra_precio,
+                                "valor": opt.valor
+                            } for opt in cust.opciones
+                        ]
+                    } for cust in personalizaciones
+                ]
+            else:
+                data_dict["personalizaciones"] = None
+                
+            return data_dict
+        return data
 
     @field_validator("imagenes", mode="after")
     @classmethod
@@ -47,6 +107,19 @@ class Product(BaseModel):
             else:
                 formatted_urls.append(f"{settings.BASE_URL}/api/v1/media/products/{img}")
         return formatted_urls
+
+class ProductCreate(BaseModel):
+    id: Optional[str] = None
+    nombre: str
+    descripcion: str
+    precio: float
+    intensidad: int
+    imagenes: List[str]
+    category_id: int
+    ingredientes: List[str] = []
+    valores_nutricionales: Optional[NutritionalValues] = None
+    personalizaciones: List[Customization] = []
+    disponible: bool = True
 
 class ProductListResponse(BaseModel):
     data: List[Product]
