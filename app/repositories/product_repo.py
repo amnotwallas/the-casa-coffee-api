@@ -1,7 +1,7 @@
 from typing import List, Optional
 from sqlmodel import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.product import Product
+from app.models.product import Product, Category
 from app.core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -23,10 +23,18 @@ class ProductRepository:
         """
         Retrieve a list of products with optional category and search filters.
         """
+        from sqlalchemy.orm import selectinload
+        from app.models.product import Customization
+        
+        # Primero construir el query base
         statement = select(Product)
         
         if category:
-            statement = statement.where(Product.categoria["id"].astext == category)
+            try:
+                cat_int = int(category)
+                statement = statement.where(Product.category_id == cat_int)
+            except (ValueError, TypeError):
+                pass
         
         if search:
             search_filter = f"%{search}%"
@@ -36,6 +44,13 @@ class ProductRepository:
             )
         
         statement = statement.offset(offset).limit(limit)
+        
+        # Eager loading de relaciones para evitar N+1
+        statement = statement.options(
+            selectinload(Product.categoria),
+            selectinload(Product.valores_nutricionales),
+            selectinload(Product.personalizaciones).selectinload(Customization.opciones)
+        )
         
         result = await self.session.execute(statement)
         return result.scalars().all()
@@ -47,7 +62,11 @@ class ProductRepository:
         statement = select(func.count()).select_from(Product)
         
         if category:
-            statement = statement.where(Product.categoria["id"].astext == category)
+            try:
+                cat_int = int(category)
+                statement = statement.where(Product.category_id == cat_int)
+            except (ValueError, TypeError):
+                pass
         
         if search:
             search_filter = f"%{search}%"
@@ -61,19 +80,59 @@ class ProductRepository:
 
     async def find_product_by_id(self, product_id: str) -> Optional[Product]:
         """
-        Find a single product by its unique identifier.
+        Find a single product by its unique identifier, including all details.
         """
-        return await self.session.get(Product, product_id)
+        from sqlalchemy.orm import selectinload
+        from app.models.product import Customization
+        statement = select(Product).where(Product.id == product_id).options(
+            selectinload(Product.categoria),
+            selectinload(Product.valores_nutricionales),
+            selectinload(Product.personalizaciones).selectinload(Customization.opciones)
+        )
+        result = await self.session.execute(statement)
+        return result.scalars().first()
+
+    async def find_category_by_id(self, category_id: int) -> Optional[Category]:
+        """
+        Check if a category exists by its ID.
+        """
+        return await self.session.get(Category, category_id)
 
     async def create_product(self, product_data: dict) -> Product:
         """
-        Create and persist a new product record.
+        Create and persist a new product record with its related data.
         """
+        from app.models.product import Nutrition, Customization, CustomizationOption
+        
+        # Extraer datos relacionales
+        nutri_data = product_data.pop("valores_nutricionales", None)
+        cust_list = product_data.pop("personalizaciones", [])
+        
+        # 1. Crear producto base
         product = Product(**product_data)
         self.session.add(product)
         await self.session.commit()
         await self.session.refresh(product)
-        return product
+        
+        # 2. Crear Nutrición
+        if nutri_data:
+            nutrition = Nutrition(product_id=product.id, **nutri_data)
+            self.session.add(nutrition)
+            
+        # 3. Crear Personalizaciones
+        for c in cust_list:
+            opts = c.pop("opciones", [])
+            cust = Customization(product_id=product.id, **c)
+            self.session.add(cust)
+            await self.session.flush()
+            
+            for o in opts:
+                opt = CustomizationOption(customization_id=cust.id, **o)
+                self.session.add(opt)
+                
+        await self.session.commit()
+        # Cargar todo para devolver el objeto completo
+        return await self.find_product_by_id(product.id)
 
     async def update_product(self, product_id: str, update_data: dict) -> Optional[Product]:
         """

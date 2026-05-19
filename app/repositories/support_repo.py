@@ -109,9 +109,12 @@ class SupportRepository:
     
     async def get_store_info(self) -> Optional[StoreInfo]:
         """
-        Retrieve store-wide settings and information.
+        Retrieve store-wide settings and information, including hours.
         """
-        return await self.session.get(StoreInfo, 1)
+        from sqlalchemy.orm import selectinload
+        statement = select(StoreInfo).where(StoreInfo.id == 1).options(selectinload(StoreInfo.horarios))
+        result = await self.session.execute(statement)
+        return result.scalars().first()
 
     async def update_store_info(self, info_data: dict) -> StoreInfo:
         """

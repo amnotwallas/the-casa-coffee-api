@@ -31,17 +31,29 @@ class UserRepository:
 
     async def find_by_firebase_uid(self, uid: str) -> Optional[User]:
         """
-        Locate a user by their Firebase Unique Identifier.
+        Locate a user by their Firebase Unique Identifier, including relationships.
         """
-        statement = select(User).where(User.firebase_uid == uid)
+        from sqlalchemy.orm import selectinload
+        statement = select(User).where(User.firebase_uid == uid).options(
+            selectinload(User.direcciones),
+            selectinload(User.favoritos),
+            selectinload(User.preferencias)
+        )
         result = await self.session.execute(statement)
         return result.scalars().first()
 
     async def find_by_id(self, user_id: str) -> Optional[User]:
         """
-        Retrieve a user by their internal database ID.
+        Retrieve a user by their internal database ID, including their addresses and favorites.
         """
-        return await self.session.get(User, user_id)
+        from sqlalchemy.orm import selectinload
+        statement = select(User).where(User.id == user_id).options(
+            selectinload(User.direcciones),
+            selectinload(User.favoritos),
+            selectinload(User.preferencias)
+        )
+        result = await self.session.execute(statement)
+        return result.scalars().first()
 
     async def create(self, user_obj: User) -> User:
         """
@@ -50,74 +62,122 @@ class UserRepository:
         self.session.add(user_obj)
         await self.session.commit()
         await self.session.refresh(user_obj)
+        
+        # Inicializar preferencias por defecto
+        from app.models.user import Preference
+        pref = Preference(user_id=user_obj.id)
+        self.session.add(pref)
+        await self.session.commit()
+        
         logger.info(f"User created in database: {user_obj.email}")
         return user_obj
 
     async def update(self, user_id: str, update_data: dict) -> Optional[User]:
         """
-        Update user profile information.
+        Update user profile information and ensure relationships are loaded.
         """
-        user = await self.find_by_id(user_id)
+        user = await self.session.get(User, user_id)
         if user:
+            # Separar preferencias de datos de usuario
+            pref_data = update_data.pop("preferencias", None)
+            
             for key, value in update_data.items():
-                setattr(user, key, value)
+                if hasattr(user, key):
+                    setattr(user, key, value)
             self.session.add(user)
+            
+            if pref_data:
+                # Recargar preferencias si existen
+                from sqlalchemy.orm import selectinload
+                statement = select(User).where(User.id == user_id).options(selectinload(User.preferencias))
+                result = await self.session.execute(statement)
+                user_with_pref = result.scalars().first()
+                
+                if user_with_pref and user_with_pref.preferencias:
+                    for k, v in pref_data.items():
+                        if hasattr(user_with_pref.preferencias, k):
+                            setattr(user_with_pref.preferencias, k, v)
+                    self.session.add(user_with_pref.preferencias)
+
             await self.session.commit()
-            await self.session.refresh(user)
-            logger.info(f"User {user_id} updated in database.")
-            return user
+            
+            # Recargar con todas las relaciones
+            from sqlalchemy.orm import selectinload
+            statement = select(User).where(User.id == user_id).options(
+                selectinload(User.direcciones),
+                selectinload(User.favoritos),
+                selectinload(User.preferencias)
+            )
+            result = await self.session.execute(statement)
+            return result.scalars().first()
         return None
 
     async def add_address(self, user_id: str, address_data: dict) -> dict:
         """
-        Add a new shipping address to the user's profile.
+        Add a new shipping address to the user's profile using the Address table.
         """
-        user = await self.find_by_id(user_id)
-        if user:
-            import uuid
-            address_data["id"] = f"addr-{str(uuid.uuid4())[:8]}"
-            # Re-assign list to trigger SQLAlchemy's mutation tracking for JSON columns
-            new_dirs = list(user.direcciones)
-            new_dirs.append(address_data)
-            user.direcciones = new_dirs
-            self.session.add(user)
-            await self.session.commit()
-            return address_data
-        return {}
+        from app.models.user import Address
+        address = Address(user_id=user_id, **address_data)
+        self.session.add(address)
+        await self.session.commit()
+        await self.session.refresh(address)
+        return {
+            "id": address.id,
+            "calle": address.calle,
+            "ciudad": address.ciudad,
+            "codigoPostal": address.codigoPostal,
+            "referencia": address.referencia,
+            "esDefault": address.esDefault
+        }
 
     async def delete_address(self, user_id: str, address_id: str) -> bool:
         """
         Remove a shipping address from the user's profile.
         """
-        user = await self.find_by_id(user_id)
-        if user:
-            original_len = len(user.direcciones)
-            user.direcciones = [a for a in user.direcciones if a["id"] != address_id]
-            if len(user.direcciones) < original_len:
-                self.session.add(user)
-                await self.session.commit()
-                return True
+        from app.models.user import Address
+        statement = select(Address).where(Address.id == address_id, Address.user_id == user_id)
+        result = await self.session.execute(statement)
+        address = result.scalars().first()
+        if address:
+            await self.session.delete(address)
+            await self.session.commit()
+            return True
         return False
 
     async def add_favorite(self, user_id: str, product_id: str):
         """
-        Add a product to the user's favorites list.
+        Add a product to the user's favorites list using the linking table directly.
         """
-        user = await self.find_by_id(user_id)
-        if user:
-            new_favs = list(user.favoritos)
-            if product_id not in new_favs:
-                new_favs.append(product_id)
-                user.favoritos = new_favs
-                self.session.add(user)
-                await self.session.commit()
+        from app.models.product import UserFavorite
+        # Verificar si ya existe para evitar duplicados
+        stmt = select(UserFavorite).where(
+            UserFavorite.user_id == user_id, 
+            UserFavorite.product_id == product_id
+        )
+        result = await self.session.execute(stmt)
+        if not result.scalars().first():
+            self.session.add(UserFavorite(user_id=user_id, product_id=product_id))
+            await self.session.commit()
 
     async def remove_favorite(self, user_id: str, product_id: str):
         """
-        Remove a product from the user's favorites list.
+        Remove a product from the user's favorites list using the linking table.
         """
-        user = await self.find_by_id(user_id)
-        if user:
-            user.favoritos = [p for p in user.favoritos if p != product_id]
-            self.session.add(user)
-            await self.session.commit()
+        from app.models.product import UserFavorite
+        from sqlalchemy import delete
+        stmt = delete(UserFavorite).where(
+            UserFavorite.user_id == user_id, 
+            UserFavorite.product_id == product_id
+        )
+        await self.session.execute(stmt)
+        await self.session.commit()
+
+    async def get_favorite_ids(self, user_id: str) -> List[str]:
+        """
+        Retrieve only the product IDs in the user's favorites list.
+        Efficient alternative to loading the full User object.
+        """
+        from app.models.product import UserFavorite
+        stmt = select(UserFavorite.product_id).where(UserFavorite.user_id == user_id)
+        result = await self.session.execute(stmt)
+        return list(result.scalars().all())
