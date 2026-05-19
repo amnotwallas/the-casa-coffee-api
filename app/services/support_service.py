@@ -143,7 +143,7 @@ class SupportService:
     # --- STORE INFO & FAQ ---
     async def get_store_hours(self) -> schema.StoreHours:
         """
-        Get current store hours and operational status.
+        Get current store hours and operational status using relational data.
         """
         info = await self.repository.get_store_info()
         if not info:
@@ -153,12 +153,7 @@ class SupportService:
                  tiempo_espera_actual=15,
                  volumen_pedidos="medio"
              )
-        return schema.StoreHours(
-            horarios=info.horarios,
-            estaAbierto=info.estaAbierto,
-            tiempo_espera_actual=info.tiempo_espera_actual,
-            volumen_pedidos=info.volumen_pedidos
-        )
+        return schema.StoreHours.model_validate(info)
 
     async def get_full_store_info(self) -> dict:
         """
@@ -179,72 +174,3 @@ class SupportService:
         Get the special menu of the day.
         """
         return await self.repository.get_menu_of_day()
-
-class AdminService:
-    """
-    Service layer for administrative operations and analytics.
-    """
-    def __init__(self, support_repo: SupportRepository, product_repo: any, order_repo: any):
-        self.support_repo = support_repo
-        self.product_repo = product_repo
-        self.order_repo = order_repo
-
-    async def get_analytics(self) -> dict:
-        """
-        Gather system-wide analytics for the admin dashboard.
-        """
-        orders = await self.order_repo.list_orders_by_user("admin")
-        total_ventas = sum(o.total for o in orders)
-        
-        return {
-            "ventasHoy": total_ventas,
-            "ventasMes": total_ventas * 1.2,
-            "pedidosPendientes": len([o for o in orders if o.status == "pending"]),
-            "productosPopulares": [{"nombre": "Frappé Mocha", "ventas": 15}],
-            "ingresos": {"efectivo": total_ventas * 0.3, "tarjeta": total_ventas * 0.7}
-        }
-
-    async def create_product(self, product_in: any) -> dict:
-        """
-        Create a new product record.
-        """
-        product = await self.product_repo.create_product(product_in.model_dump())
-        return product.model_dump()
-
-    async def update_product(self, product_id: str, update_data: dict) -> dict:
-        """
-        Update an existing product record.
-        """
-        updated = await self.product_repo.update_product(product_id, update_data)
-        if not updated:
-            raise HTTPException(status_code=404, detail="Product not found")
-        return updated.model_dump()
-
-    async def delete_product(self, product_id: str):
-        """
-        Delete a product record.
-        """
-        if not await self.product_repo.delete_product(product_id):
-            raise HTTPException(status_code=404, detail="Product not found")
-
-    async def list_all_orders(self) -> List[dict]:
-        """
-        Retrieve all orders for administrative review.
-        """
-        orders = await self.order_repo.list_orders_by_user("admin")
-        return [o.model_dump() for o in orders]
-
-    async def update_order_status(self, order_id: str, status: str) -> dict:
-        """
-        Update order status and tracking information.
-        """
-        tracking_map = {
-            "preparing": {"preparando": True},
-            "ready": {"listo": True},
-            "on_the_way": {"enCamino": True},
-            "delivered": {"entregado": True}
-        }
-        updated = await self.order_repo.update_order_status(order_id, status, tracking_map.get(status))
-        if not updated:
-            raise HTTPException(status_code=404, detail="Order not found")
-        return updated.model_dump()
