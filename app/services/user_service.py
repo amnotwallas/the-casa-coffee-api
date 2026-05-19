@@ -4,7 +4,7 @@ from app.models.user import User
 from app.schemas.user_schema import FirebaseAuthRequest, AuthResponse, UserProfile
 from app.core.logger import get_logger
 from app.core.firebase import verify_firebase_token
-from fastapi import HTTPException
+from app.core.exceptions import EntityNotFoundException, UnauthorizedException, BusinessLogicException
 
 logger = get_logger(__name__)
 
@@ -24,15 +24,24 @@ class AuthService:
         decoded_token = verify_firebase_token(auth_data.firebase_token)
         if not decoded_token:
             logger.warning("Invalid or expired Firebase token")
-            raise HTTPException(status_code=401, detail="Invalid Firebase token")
+            raise UnauthorizedException(message="Invalid Firebase token")
         
         firebase_uid = decoded_token.get("uid")
         email = decoded_token.get("email")
         firebase_name = decoded_token.get("name")
         firebase_picture = decoded_token.get("picture")
 
+        # 1. Intentar encontrar por Firebase UID (lo más rápido)
         user = await self.repository.find_by_firebase_uid(firebase_uid)
 
+        # 2. Si no hay UID, intentar encontrar por Email (para evitar duplicados)
+        if not user and email:
+            user = await self.repository.find_by_email(email)
+            if user:
+                logger.info(f"Linking existing email {email} to new Firebase UID: {firebase_uid}")
+                user = await self.repository.update(user.id, {"firebase_uid": firebase_uid})
+
+        # 3. Si sigue sin existir, crearlo
         if not user:
             logger.info(f"Creating new user for UID: {firebase_uid}")
             new_user = User(
@@ -43,7 +52,10 @@ class AuthService:
                 foto=firebase_picture
             )
             user = await self.repository.create(new_user)
+            # Recargar para inicializar relaciones (direcciones, favoritos)
+            user = await self.repository.find_by_id(user.id)
         else:
+            # 4. Si ya existe, actualizar campos básicos si cambiaron
             update_fields = {}
             if auth_data.nombre and auth_data.nombre != user.nombre:
                 update_fields["nombre"] = auth_data.nombre
@@ -54,7 +66,7 @@ class AuthService:
                 user = await self.repository.update(user.id, update_fields)
 
         return AuthResponse(
-            user=UserProfile(**user.model_dump())
+            user=UserProfile.model_validate(user)
         )
 
 class UserService:
@@ -70,8 +82,8 @@ class UserService:
         """
         user = await self.repository.find_by_id(user_id)
         if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        return UserProfile(**user.model_dump())
+            raise EntityNotFoundException(message="User not found")
+        return UserProfile.model_validate(user)
 
     async def update_profile(self, user_id: str, update_data: dict) -> UserProfile:
         """
@@ -79,8 +91,8 @@ class UserService:
         """
         user = await self.repository.update(user_id, update_data)
         if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        return UserProfile(**user.model_dump())
+            raise EntityNotFoundException(message="User not found")
+        return UserProfile.model_validate(user)
 
     async def add_address(self, user_id: str, address_in: any) -> dict:
         """
@@ -93,7 +105,7 @@ class UserService:
         Remove a shipping address from user profile.
         """
         if not await self.repository.delete_address(user_id, address_id):
-            raise HTTPException(status_code=404, detail="Address not found")
+            raise EntityNotFoundException(message="Address not found")
 
     async def add_to_favorites(self, user_id: str, product_id: str):
         """
@@ -110,14 +122,12 @@ class UserService:
     async def list_favorites(self, user_id: str) -> List[str]:
         """
         Get the list of product IDs in user favorites.
+        Optimized to fetch only IDs.
         """
-        user = await self.repository.find_by_id(user_id)
-        if not user:
-            raise HTTPException(status_code=404, detail="User not found")
-        return user.favoritos
+        return await self.repository.get_favorite_ids(user_id)
 
     async def change_password(self, user_id: str, old_pwd: str, new_pwd: str):
         """
         Password management is delegated to Firebase.
         """
-        raise HTTPException(status_code=400, detail="Password changes must be managed through Firebase")
+        raise BusinessLogicException(message="Password changes must be managed through Firebase")

@@ -2,12 +2,17 @@ from typing import List, Optional
 from app.repositories.product_repo import ProductRepository
 from app.schemas.product_schema import Product as ProductSchema
 
+from datetime import datetime, timedelta
+# ... (rest of imports)
+
 class ProductService:
     """
     Business logic layer for coffee shop products.
     """
     def __init__(self, repository: ProductRepository):
         self.repository = repository
+        self._cache = {}
+        self._cache_ttl = timedelta(minutes=5)
 
     async def get_all_products(
         self, 
@@ -17,8 +22,16 @@ class ProductService:
         limit: int = 10
     ) -> List[ProductSchema]:
         """
-        Get paginated products with optional filtering.
+        Get paginated products with simple in-memory caching.
         """
+        cache_key = f"list_{category}_{search}_{page}_{limit}"
+        now = datetime.now()
+        
+        if cache_key in self._cache:
+            entry = self._cache[cache_key]
+            if now < entry["expiry"]:
+                return entry["data"]
+
         offset = (page - 1) * limit
         db_products = await self.repository.list_all_products(
             category=category, 
@@ -26,7 +39,15 @@ class ProductService:
             offset=offset, 
             limit=limit
         )
-        return [ProductSchema(**p.model_dump()) for p in db_products]
+        result = [ProductSchema.model_validate(p) for p in db_products]
+        
+        # Guardar en caché
+        self._cache[cache_key] = {
+            "data": result,
+            "expiry": now + self._cache_ttl
+        }
+        
+        return result
 
     async def get_total_count(self, category: Optional[str] = None, search: Optional[str] = None) -> int:
         """
@@ -39,7 +60,7 @@ class ProductService:
         Retrieve a single product by ID and convert to schema.
         """
         product = await self.repository.find_product_by_id(product_id)
-        return ProductSchema(**product.model_dump()) if product else None
+        return ProductSchema.model_validate(product) if product else None
 
     async def get_categories(self) -> List[dict]:
         """
@@ -51,7 +72,13 @@ class ProductService:
         for p in products:
             c = p.categoria
             if c:
-                cats[c.get("id")] = c
+                # Si es un objeto de SQLModel/Pydantic
+                cat_id = getattr(c, "id", None)
+                if cat_id:
+                    cats[cat_id] = {
+                        "id": cat_id,
+                        "nombre": getattr(c, "nombre", "Sin nombre")
+                    }
         return list(cats.values())
 
     async def get_featured_products(self) -> List[ProductSchema]:
@@ -60,4 +87,4 @@ class ProductService:
         """
         products = await self.repository.list_all_products(limit=100)
         featured = [p for p in products if p.rating_avg >= 4.8]
-        return [ProductSchema(**p.model_dump()) for p in featured]
+        return [ProductSchema.model_validate(p) for p in featured]
