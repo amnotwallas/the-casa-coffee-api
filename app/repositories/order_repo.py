@@ -187,16 +187,31 @@ class OrderRepository:
         from datetime import datetime, timedelta
         from app.models.order import OrderItem, Order
         
+        # 1. Definir periodos de tiempo precisos
         now = datetime.utcnow()
-        seven_days_ago = now - timedelta(days=7)
-
-        # 1. Total ventas hoy (Históricas para simplificar por ahora)
-        stmt_total = select(func.sum(Order.total))
+        today_date = now.date()
+        yesterday_date = today_date - timedelta(days=1)
         
-        # 2. Ventas del mes actual
+        start_of_week = datetime.combine(today_date - timedelta(days=6), datetime.min.time())
+        start_of_prev_week = start_of_week - timedelta(days=7)
+        
+        # --- CONSULTAS ACTUALES ---
+
+        # 1. Total ventas hoy (Filtrado por hoy y estado delivered)
+        stmt_today = select(func.sum(Order.total)).where(
+            and_(
+                func.date(Order.fecha) == today_date,
+                Order.status == "delivered"
+            )
+        )
+        
+        # 2. Ventas del mes actual (Solo delivered)
         stmt_month = select(func.sum(Order.total)).where(
-            extract('month', Order.fecha) == now.month,
-            extract('year', Order.fecha) == now.year
+            and_(
+                extract('month', Order.fecha) == now.month,
+                extract('year', Order.fecha) == now.year,
+                Order.status == "delivered"
+            )
         )
         
         # 3. Conteo de pedidos pendientes
@@ -210,59 +225,134 @@ class OrderRepository:
             .limit(5)
         )
 
-        # 5. Ventas Semanales (Últimos 7 días agrupados por fecha)
-        # Nota: SQLite no tiene una función sencilla de 'dayname', así que agruparemos por fecha
-        # y mapearemos a nombres de día en Python para máxima compatibilidad.
+        # 5. Ventas Semanales (Últimos 7 días naturales, solo delivered)
         stmt_weekly = (
             select(func.date(Order.fecha).label("dia"), func.sum(Order.total).label("ventas"))
-            .where(Order.fecha >= seven_days_ago)
+            .where(
+                and_(
+                    Order.fecha >= start_of_week,
+                    Order.status == "delivered"
+                )
+            )
             .group_by(func.date(Order.fecha))
             .order_by(func.date(Order.fecha))
         )
 
-        total_result = await self.session.execute(stmt_total)
-        month_result = await self.session.execute(stmt_month)
-        pending_result = await self.session.execute(stmt_pending)
-        top_result = await self.session.execute(stmt_top)
-        weekly_result = await self.session.execute(stmt_weekly)
+        # --- CONSULTAS PARA DELTAS ---
 
-        total_ventas = total_result.scalar() or 0.0
-        ventas_mes = month_result.scalar() or 0.0
-        pending_count = pending_result.scalar() or 0
-        
+        # 6. Ventas Ayer (para Delta Hoy)
+        stmt_yesterday = select(func.sum(Order.total)).where(
+            and_(
+                func.date(Order.fecha) == yesterday_date,
+                Order.status == "delivered"
+            )
+        )
+
+        # 7. Desglose de ingresos por tipo de pago (Solo entregados)
+        stmt_payments = select(
+            Order.tipo_pago, 
+            func.sum(Order.total).label("total")
+        ).where(
+            Order.status == "delivered"
+        ).group_by(Order.tipo_pago)
+
+        # 8. Pedidos e Ingresos Semana Pasada (hace 14-7 días)
+        stmt_prev_week = select(
+            func.count(Order.id).label("count"),
+            func.sum(Order.total).label("sum")
+        ).where(
+            and_(
+                Order.fecha >= start_of_prev_week,
+                Order.fecha < start_of_week,
+                Order.status == "delivered"
+            )
+        )
+
+        # 8. Pedidos Semana Actual (para Delta Pedidos)
+        stmt_curr_week_count = select(func.count(Order.id)).where(
+            and_(
+                Order.fecha >= start_of_week,
+                Order.status == "delivered"
+            )
+        )
+
+        # --- EJECUCIÓN ---
+
+        results = await self.session.execute(stmt_today)
+        ventas_hoy = results.scalar() or 0.0
+
+        results = await self.session.execute(stmt_month)
+        ventas_mes = results.scalar() or 0.0
+
+        results = await self.session.execute(stmt_pending)
+        pending_count = results.scalar() or 0
+
+        results = await self.session.execute(stmt_top)
         productos_populares = [
-            {"nombre": row[0], "ventas": row[1]} for row in top_result.all()
+            {"nombre": row[0], "ventas": row[1]} for row in results.all()
         ]
 
-        # Mapeo de nombres de días
-        dias_map = {
-            0: "Lun", 1: "Mar", 2: "Mié", 3: "Jue", 4: "Vie", 5: "Sáb", 6: "Dom"
+        results = await self.session.execute(stmt_weekly)
+        weekly_data = results.all()
+
+        results = await self.session.execute(stmt_yesterday)
+        ventas_ayer = results.scalar() or 0.0
+
+        results = await self.session.execute(stmt_payments)
+        payment_rows = results.all()
+        ingresos_reales = {"efectivo": 0.0, "tarjeta": 0.0}
+        for row in payment_rows:
+            if row[0] in ingresos_reales:
+                ingresos_reales[row[0]] = float(row[1] or 0.0)
+
+        results = await self.session.execute(stmt_prev_week)
+        prev_week_row = results.one()
+        prev_week_count = prev_week_row[0] or 0
+        prev_week_sum = prev_week_row[1] or 0.0
+
+        results = await self.session.execute(stmt_curr_week_count)
+        curr_week_count = results.scalar() or 0
+
+        # --- CÁLCULO DE DELTAS ---
+
+        def calc_delta(curr, prev):
+            if prev == 0:
+                return 100.0 if curr > 0 else 0.0
+            return ((curr - prev) / prev) * 100
+
+        deltas = {
+            "ventasHoy": calc_delta(ventas_hoy, ventas_ayer),
+            "pedidosSemanales": calc_delta(curr_week_count, prev_week_count),
+            "ingresosSemanales": calc_delta(sum(row[1] for row in weekly_data) if weekly_data else 0.0, prev_week_sum)
         }
-        
-        # Inicializar los últimos 7 días con 0
+
+        # --- FORMATEO SEMANAL ---
+
+        dias_map = {0: "Lun", 1: "Mar", 2: "Mié", 3: "Jue", 4: "Vie", 5: "Sáb", 6: "Dom"}
         ultimos_7_dias = {}
         for i in range(7):
-            fecha = (now - timedelta(days=i)).date()
+            fecha = (today_date - timedelta(days=i))
             ultimos_7_dias[fecha.isoformat()] = {"day": dias_map[fecha.weekday()], "ventas": 0.0}
 
-        for row in weekly_result.all():
-            fecha_str = row[0]
+        for row in weekly_data:
+            fecha_str = str(row[0])
             if fecha_str in ultimos_7_dias:
-                ultimos_7_dias[fecha_str]["ventas"] = row[1] or 0.0
+                ultimos_7_dias[fecha_str]["ventas"] = float(row[1] or 0.0)
 
-        # Ordenar cronológicamente (de más antiguo a más reciente)
-        ventas_semanales = sorted(ultimos_7_dias.values(), key=lambda x: list(dias_map.values()).index(x["day"]))
-        # Re-ordenar para que el último día sea hoy (más intuitivo para la gráfica)
-        # En realidad Recharts suele esperar un orden cronológico.
-        # Vamos a simplemente devolverlos en orden de fecha.
-        ventas_semanales = [ultimos_7_dias[d] for d in sorted(ultimos_7_dias.keys())]
+        dias_orden = ["Lun", "Mar", "Mié", "Jue", "Vie", "Sáb", "Dom"]
+        ventas_semanales = sorted(
+            ultimos_7_dias.values(), 
+            key=lambda x: dias_orden.index(x["day"])
+        )
 
         return {
-            "total_ventas": total_ventas,
+            "total_ventas": ventas_hoy,
             "ventas_mes": ventas_mes,
             "pending_count": pending_count,
             "productos_populares": productos_populares,
-            "ventas_semanales": ventas_semanales
+            "ventas_semanales": ventas_semanales,
+            "deltas": deltas,
+            "ingresos_desglosados": ingresos_reales
         }
 
     async def find_order_by_id(self, order_id: str) -> Optional[Order]:

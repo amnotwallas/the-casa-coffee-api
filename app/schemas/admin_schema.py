@@ -2,6 +2,11 @@ from pydantic import BaseModel
 from typing import List, Dict, Any, Optional
 from datetime import datetime
 
+class AdminAnalyticsDeltas(BaseModel):
+    ventasHoy: float
+    pedidosSemanales: float
+    ingresosSemanales: float
+
 class AdminAnalytics(BaseModel):
     ventasHoy: float
     ventasMes: float
@@ -11,6 +16,7 @@ class AdminAnalytics(BaseModel):
     clientesTotales: int
     productosTotales: int
     ventasSemanales: List[Dict[str, Any]] = []
+    deltas: AdminAnalyticsDeltas
 
 class UpdateOrderStatusRequest(BaseModel):
     status: str
