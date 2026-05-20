@@ -1,5 +1,6 @@
 from pydantic import BaseModel
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
+from datetime import datetime
 
 class AdminAnalytics(BaseModel):
     ventasHoy: float
@@ -7,6 +8,30 @@ class AdminAnalytics(BaseModel):
     pedidosPendientes: int
     productosPopulares: List[Dict[str, Any]]
     ingresos: Dict[str, float]
+    clientesTotales: int
+    productosTotales: int
+    ventasSemanales: List[Dict[str, Any]] = []
 
 class UpdateOrderStatusRequest(BaseModel):
-    status: str # pending, preparing, ready, on_the_way, delivered, cancelled
+    status: str
+
+class AdminOrderResponse(BaseModel):
+    id: str
+    user_id: str
+    customerName: str
+    fecha: datetime
+    items: List[Dict[str, Any]] = []
+    total: float
+    status: str
+    tracking: Dict[str, bool]
+
+class NotificationBase(BaseModel):
+    id: str
+    type: str
+    title: str
+    body: str
+    read: bool
+    created_at: datetime
+
+class NotificationRead(NotificationBase):
+    pass

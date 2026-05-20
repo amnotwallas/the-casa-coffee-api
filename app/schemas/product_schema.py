@@ -28,6 +28,7 @@ class Product(BaseModel):
     precio: float
     intensidad: int
     imagenes: List[str]
+    icon: str = "coffee"
     categoria: Optional[Category] = None
     ingredientes: List[str]
     valores_nutricionales: Optional[NutritionalValues] = None
@@ -115,6 +116,7 @@ class ProductCreate(BaseModel):
     precio: float
     intensidad: int
     imagenes: List[str]
+    icon: str = "coffee"
     category_id: int
     ingredientes: List[str] = []
     valores_nutricionales: Optional[NutritionalValues] = None
