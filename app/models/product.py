@@ -44,6 +44,7 @@ class Product(SQLModel, table=True):
     precio: float
     intensidad: int
     imagenes: List[str] = Field(default=[], sa_column=Column(JSON))
+    icon: str = Field(default="coffee") # 'coffee', 'cookie', 'croissant'
     
     category_id: Optional[int] = Field(default=None, foreign_key="category.id")
     categoria: Optional[Category] = Relationship(back_populates="productos")
