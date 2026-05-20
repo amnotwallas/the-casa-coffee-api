@@ -6,6 +6,7 @@ from app.repositories.product_repo import ProductRepository
 from app.repositories.user_repo import UserRepository
 from app.repositories.order_repo import OrderRepository
 from app.repositories.support_repo import SupportRepository
+from app.repositories.admin_repo import AdminRepository
 from app.services.product_service import ProductService
 from app.services.user_service import AuthService, UserService
 from app.services.order_service import CartService, OrderService
@@ -44,6 +45,12 @@ def get_support_repo(session: AsyncSession = Depends(get_session)) -> SupportRep
     """
     return SupportRepository(session)
 
+def get_admin_repo(session: AsyncSession = Depends(get_session)) -> AdminRepository:
+    """
+    Factory for AdminRepository injected with a database session.
+    """
+    return AdminRepository(session)
+
 # --- SERVICE FACTORIES ---
 
 def get_product_service(repo: ProductRepository = Depends(get_product_repo)) -> ProductService:
@@ -77,7 +84,8 @@ def get_order_service(
     order_repo: OrderRepository = Depends(get_order_repo), 
     cart_service: CartService = Depends(get_cart_service),
     user_repo: UserRepository = Depends(get_user_repo),
-    product_repo: ProductRepository = Depends(get_product_repo)
+    product_repo: ProductRepository = Depends(get_product_repo),
+    admin_repo: AdminRepository = Depends(get_admin_repo)
 ) -> OrderService:
     """
     Factory for OrderService with required dependencies.
@@ -86,7 +94,8 @@ def get_order_service(
         order_repo=order_repo, 
         cart_service=cart_service, 
         user_repo=user_repo,
-        product_repo=product_repo
+        product_repo=product_repo,
+        admin_repo=admin_repo
     )
 
 def get_support_service(repo: SupportRepository = Depends(get_support_repo)) -> SupportService:
@@ -98,7 +107,9 @@ def get_support_service(repo: SupportRepository = Depends(get_support_repo)) -> 
 def get_admin_service(
     support_repo: SupportRepository = Depends(get_support_repo),
     product_repo: ProductRepository = Depends(get_product_repo),
-    order_repo: OrderRepository = Depends(get_order_repo)
+    order_repo: OrderRepository = Depends(get_order_repo),
+    user_repo: UserRepository = Depends(get_user_repo),
+    admin_repo: AdminRepository = Depends(get_admin_repo)
 ) -> AdminService:
     """
     Factory for AdminService.
@@ -106,7 +117,9 @@ def get_admin_service(
     return AdminService(
         support_repo=support_repo,
         product_repo=product_repo,
-        order_repo=order_repo
+        order_repo=order_repo,
+        user_repo=user_repo,
+        admin_repo=admin_repo
     )
 
 def get_agent_service(

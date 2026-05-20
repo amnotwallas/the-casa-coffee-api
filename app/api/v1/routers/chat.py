@@ -3,20 +3,36 @@ from fastapi.responses import StreamingResponse
 import json
 from typing import List, Optional
 from app.ai.services.agent_service import AgentService
-from app.api.dependencies import get_agent_service, get_current_user_required
+from app.api.dependencies import get_agent_service, get_current_user_required, get_admin_repo, get_user_repo
+from app.repositories.admin_repo import AdminRepository
+from app.repositories.user_repo import UserRepository
 from app.schemas.chat_schema import ChatRequest, ChatResponse
 from app.schemas.welcome_schema import WelcomeResponse
+from app.core.logger import get_logger
 
+logger = get_logger(__name__)
 router = APIRouter(prefix="/chat", tags=["AI Chat"])
 
 @router.post("/message")
 async def chat_message(
     request: ChatRequest,
     agent_service: AgentService = Depends(get_agent_service),
-    current_user_id: str = Depends(get_current_user_required)
+    current_user: dict = Depends(get_current_user_required),
+    admin_repo: AdminRepository = Depends(get_admin_repo)
 ):
     """Procesa un mensaje de chat con el Barista AI con streaming. REQUIERE LOGIN."""
     
+    # Generar notificación para el administrador
+    try:
+        user_name = current_user.get("nombre", "Cliente")
+        await admin_repo.create_notification(
+            type="support",
+            title="Nueva interacción de chat",
+            body=f"El cliente {user_name} ha enviado un mensaje al asistente virtual."
+        )
+    except Exception as e:
+        logger.error(f"Error al crear notificación de chat: {e}")
+
     async def event_generator():
         # Enviar metadata inicial
         metadata = {

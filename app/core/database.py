@@ -8,6 +8,7 @@ from app.core.logger import get_logger
 from app.models.user import User
 from app.models.product import Product
 from app.models.order import Order, CartDB
+from app.models.admin import AdminNotification
 from app.models.support import Review, Promotion, Notification, FAQ, StoreInfo
 
 logger = get_logger(__name__)

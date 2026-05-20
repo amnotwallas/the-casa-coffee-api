@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Header, HTTPException
 from typing import List, Optional
-from app.schemas.admin_schema import AdminAnalytics, UpdateOrderStatusRequest
+from app.schemas.admin_schema import AdminAnalytics, UpdateOrderStatusRequest, NotificationRead
 from app.schemas.product_schema import Product, ProductCreate
 from app.services.admin_service import AdminService
 from app.api.dependencies import get_admin_service, get_current_user_required
@@ -54,3 +54,18 @@ async def update_order_status(
 ):
     """Actualiza el estado de un pedido (ej: de 'preparing' a 'ready')."""
     return await admin_service.update_order_status(order_id, request.status)
+
+@router.get("/notifications", response_model=List[NotificationRead], dependencies=[Depends(verify_admin_access)])
+async def list_notifications(limit: int = 20, admin_service: AdminService = Depends(get_admin_service)):
+    """Obtiene las notificaciones recientes para el administrador."""
+    return await admin_service.list_notifications(limit)
+
+@router.patch("/notifications/{notification_id}/read", dependencies=[Depends(verify_admin_access)])
+async def mark_notification_read(notification_id: str, admin_service: AdminService = Depends(get_admin_service)):
+    """Marca una notificación como leída."""
+    return await admin_service.mark_notification_read(notification_id)
+
+@router.patch("/notifications/read-all", dependencies=[Depends(verify_admin_access)])
+async def mark_all_notifications_read(admin_service: AdminService = Depends(get_admin_service)):
+    """Marca todas las notificaciones como leídas."""
+    return await admin_service.mark_all_notifications_read()
