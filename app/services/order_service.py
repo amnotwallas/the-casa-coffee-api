@@ -134,7 +134,7 @@ class OrderService:
         self.product_repo = product_repo
         self.admin_repo = admin_repo
 
-    async def checkout(self, user_id: str, address_id: str, idempotency_key: str) -> dict:
+    async def checkout(self, user_id: str, address_id: str, idempotency_key: str, tipo_pago: str = "efectivo") -> dict:
         """
         Convert cart items into a finalized order with real-time validation.
         """
@@ -177,7 +177,8 @@ class OrderService:
         new_order_data = {
             "user_id": user_id,
             "items": verified_items,
-            "total": verified_total
+            "total": verified_total,
+            "tipo_pago": tipo_pago
         }
 
         order = await self.order_repo.create_order(new_order_data)

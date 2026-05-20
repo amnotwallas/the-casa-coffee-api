@@ -35,10 +35,11 @@ class AdminService:
             "ventasMes": summary["ventas_mes"],
             "pedidosPendientes": summary["pending_count"],
             "productosPopulares": summary["productos_populares"],
-            "ingresos": {"efectivo": total_ventas * 0.3, "tarjeta": total_ventas * 0.7},
+            "ingresos": summary.get("ingresos_desglosados", {"efectivo": 0.0, "tarjeta": 0.0}),
             "clientesTotales": clientes,
             "productosTotales": productos,
-            "ventasSemanales": summary.get("ventas_semanales", [])
+            "ventasSemanales": summary.get("ventas_semanales", []),
+            "deltas": summary.get("deltas")
         }
 
     async def list_notifications(self, limit: int = 20) -> List[dict]:
@@ -109,6 +110,7 @@ class AdminService:
                     "nombre": item.nombre,
                     "cantidad": item.cantidad,
                     "precio": item.precio,
+                    "personalizaciones": item.personalizaciones,
                     "subtotal": item.subtotal
                 })
                 
