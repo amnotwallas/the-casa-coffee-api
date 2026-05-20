@@ -150,12 +150,16 @@ class OrderService:
         if not any(addr.id == address_id for addr in user.direcciones):
             raise ForbiddenException(message="La dirección seleccionada no pertenece a tu cuenta.")
 
-        # 3. Validar precios y disponibilidad en tiempo real
+        # 3. Validar precios y disponibilidad de forma masiva (Optimización N+1)
+        product_ids = [item.productId for item in cart.items]
+        products_db = await self.product_repo.find_products_by_ids(product_ids)
+        product_map = {p.id: p for p in products_db}
+
         verified_items = []
         verified_total = 0.0
         
         for item in cart.items:
-            product = await self.product_repo.find_product_by_id(item.productId)
+            product = product_map.get(item.productId)
             if not product or not product.disponible:
                 raise ResourceGoneException(
                     message=f"El producto '{item.nombre}' ya no está disponible."

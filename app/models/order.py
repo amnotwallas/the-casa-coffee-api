@@ -18,14 +18,14 @@ class OrderItem(SQLModel, table=True):
 class Order(SQLModel, table=True):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
     user_id: str = Field(index=True)
-    fecha: datetime = Field(default_factory=datetime.utcnow)
+    fecha: datetime = Field(default_factory=datetime.utcnow, index=True)
     
     # Normalización de ítems
     items: List[OrderItem] = Relationship(back_populates="order", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
     
     total: float
     tipo_pago: str = Field(default="efectivo")
-    status: str = "pending"
+    status: str = Field(default="pending", index=True)
     tracking: Dict[str, bool] = Field(
         default={
             "preparando": True,

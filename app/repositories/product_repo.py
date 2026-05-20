@@ -92,6 +92,18 @@ class ProductRepository:
         result = await self.session.execute(statement)
         return result.scalars().first()
 
+    async def find_products_by_ids(self, product_ids: List[str]) -> List[Product]:
+        """
+        Fetch multiple products by their IDs in a single query.
+        Useful to avoid N+1 query problems.
+        """
+        if not product_ids:
+            return []
+            
+        statement = select(Product).where(Product.id.in_(product_ids))
+        result = await self.session.execute(statement)
+        return list(result.scalars().all())
+
     async def find_category_by_id(self, category_id: int) -> Optional[Category]:
         """
         Check if a category exists by its ID.

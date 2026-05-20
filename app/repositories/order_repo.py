@@ -183,6 +183,7 @@ class OrderRepository:
         Perform database-level aggregations for analytics including month sales, top products,
         and weekly sales distribution.
         """
+        import asyncio
         from sqlalchemy import func, extract, and_
         from datetime import datetime, timedelta
         from app.models.order import OrderItem, Order
@@ -276,42 +277,52 @@ class OrderRepository:
             )
         )
 
-        # --- EJECUCIÓN ---
+        # --- EJECUCIÓN CONCURRENTE (Optimización de Rendimiento) ---
 
-        results = await self.session.execute(stmt_today)
-        ventas_hoy = results.scalar() or 0.0
+        (
+            res_today, 
+            res_month, 
+            res_pending, 
+            res_top, 
+            res_weekly, 
+            res_yesterday, 
+            res_payments, 
+            res_prev_week, 
+            res_curr_week
+        ) = await asyncio.gather(
+            self.session.execute(stmt_today),
+            self.session.execute(stmt_month),
+            self.session.execute(stmt_pending),
+            self.session.execute(stmt_top),
+            self.session.execute(stmt_weekly),
+            self.session.execute(stmt_yesterday),
+            self.session.execute(stmt_payments),
+            self.session.execute(stmt_prev_week),
+            self.session.execute(stmt_curr_week_count)
+        )
 
-        results = await self.session.execute(stmt_month)
-        ventas_mes = results.scalar() or 0.0
-
-        results = await self.session.execute(stmt_pending)
-        pending_count = results.scalar() or 0
-
-        results = await self.session.execute(stmt_top)
+        ventas_hoy = res_today.scalar() or 0.0
+        ventas_mes = res_month.scalar() or 0.0
+        pending_count = res_pending.scalar() or 0
+        
         productos_populares = [
-            {"nombre": row[0], "ventas": row[1]} for row in results.all()
+            {"nombre": row[0], "ventas": row[1]} for row in res_top.all()
         ]
 
-        results = await self.session.execute(stmt_weekly)
-        weekly_data = results.all()
+        weekly_data = res_weekly.all()
+        ventas_ayer = res_yesterday.scalar() or 0.0
 
-        results = await self.session.execute(stmt_yesterday)
-        ventas_ayer = results.scalar() or 0.0
-
-        results = await self.session.execute(stmt_payments)
-        payment_rows = results.all()
+        payment_rows = res_payments.all()
         ingresos_reales = {"efectivo": 0.0, "tarjeta": 0.0}
         for row in payment_rows:
             if row[0] in ingresos_reales:
                 ingresos_reales[row[0]] = float(row[1] or 0.0)
 
-        results = await self.session.execute(stmt_prev_week)
-        prev_week_row = results.one()
+        prev_week_row = res_prev_week.one()
         prev_week_count = prev_week_row[0] or 0
         prev_week_sum = prev_week_row[1] or 0.0
 
-        results = await self.session.execute(stmt_curr_week_count)
-        curr_week_count = results.scalar() or 0
+        curr_week_count = res_curr_week.scalar() or 0
 
         # --- CÁLCULO DE DELTAS ---
 
