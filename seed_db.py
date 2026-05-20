@@ -8,6 +8,7 @@ from app.core.database import engine, init_db
 from app.models.user import User, Address, Preference
 from app.models.product import Product, Category, Nutrition, Customization, CustomizationOption
 from app.models.support import Review, StoreInfo, StoreSchedule
+from app.models.order import Order, OrderItem
 
 def load_json_data(file_path: str) -> Dict[str, Any]:
     with open(file_path, "r", encoding="utf-8") as f:
@@ -36,7 +37,7 @@ async def migrate_users(session: AsyncSession, users: List[Dict[str, Any]]):
             
             user = User(
                 id=u["id"],
-                firebase_uid=f"seed_uid_{u['id'][:8]}",
+                firebase_uid=f"seed_uid_{u['id']}",
                 nombre=u["nombre"],
                 email=u["email"],
                 is_admin=is_admin,
@@ -115,6 +116,33 @@ async def migrate_products(session: AsyncSession, products: List[Dict[str, Any]]
                     ))
     await session.commit()
 
+async def migrate_orders(session: AsyncSession, orders: List[Dict[str, Any]]):
+    print("-> Migrando pedidos...")
+    for o in orders:
+        existing = await session.get(Order, o["id"])
+        if not existing:
+            order = Order(
+                id=o["id"],
+                user_id=o["user_id"],
+                fecha=datetime.fromisoformat(o["fecha"].replace("Z", "+00:00")).replace(tzinfo=None),
+                total=o["total"],
+                status=o["status"],
+                tracking=o["tracking"]
+            )
+            session.add(order)
+            await session.flush()
+            
+            for item in o.get("items", []):
+                session.add(OrderItem(
+                    order_id=order.id,
+                    product_id=item["productId"],
+                    nombre=item["nombre"],
+                    cantidad=item["cantidad"],
+                    precio=item["precio"],
+                    subtotal=item["subtotal"]
+                ))
+    await session.commit()
+
 async def migrate_reviews(session: AsyncSession, reviews_map: Dict[str, List[Dict[str, Any]]]):
     print("-> Migrando reseñas...")
     for product_id, reviews in reviews_map.items():
@@ -171,6 +199,7 @@ async def seed_database():
             await migrate_categories(session, data.get("categories", []))
             await migrate_users(session, data.get("users", []))
             await migrate_products(session, data.get("products", []))
+            await migrate_orders(session, data.get("orders", []))
             await migrate_reviews(session, data.get("reviews", {}))
             await migrate_store_info(session, data.get("store_info", {}))
             
@@ -178,7 +207,9 @@ async def seed_database():
             print("✅ ¡Siembra completada con éxito!")
         except Exception as e:
             await session.rollback()
+            import traceback
             print(f"❌ Error durante la siembra: {e}")
+            traceback.print_exc()
 
 if __name__ == "__main__":
     asyncio.run(seed_database())
