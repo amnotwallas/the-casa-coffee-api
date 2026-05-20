@@ -45,23 +45,14 @@
         {
           "tipo": "Tamaño",
           "opciones": [
-            {
-              "nombre": "Chico",
-              "extra_precio": 0
-            }
+            { "nombre": "Chico", "extra_precio": 0 }
           ]
         },
         {
           "tipo": "Leche",
           "opciones": [
-            {
-              "nombre": "Entera",
-              "extra_precio": 0
-            },
-            {
-              "nombre": "Almendra",
-              "extra_precio": 12.0
-            }
+            { "nombre": "Entera", "extra_precio": 0 },
+            { "nombre": "Almendra", "extra_precio": 12.0 }
           ]
         }
       ],
@@ -106,14 +97,8 @@
         {
           "tipo": "Tamaño",
           "opciones": [
-            {
-              "nombre": "Mediano",
-              "extra_precio": 0
-            },
-            {
-              "nombre": "Grande",
-              "extra_precio": 10.0
-            }
+            { "nombre": "Mediano", "extra_precio": 0 },
+            { "nombre": "Grande", "extra_precio": 10.0 }
           ]
         }
       ],
@@ -139,14 +124,8 @@
         {
           "tipo": "Leche",
           "opciones": [
-            {
-              "nombre": "Entera",
-              "extra_precio": 0
-            },
-            {
-              "nombre": "Deslactosada",
-              "extra_precio": 5.0
-            }
+            { "nombre": "Entera", "extra_precio": 0 },
+            { "nombre": "Deslactosada", "extra_precio": 5.0 }
           ]
         }
       ],
@@ -175,12 +154,13 @@
     }
   ],
   "users": [
-        {
-      "nombre": "Admin",
+    {
+      "id": "admin-uid-999",
+      "nombre": "Administrador",
       "email": "admin@thecasa.com",
       "password": "Password123!",
       "telefono": "+525511223344",
-      "id": "ecdb241b-5a65-490f-9a5a-bafc4f1b391e",
+      "is_admin": true,
       "direcciones": [],
       "favoritos": [],
       "preferencias": {
@@ -190,23 +170,147 @@
       }
     },
     {
-      "nombre": "Estudiante Test",
-      "email": "estudiante@example.com",
+      "id": "user-uid-001",
+      "nombre": "Juan Pérez",
+      "email": "juan.perez@example.com",
       "password": "Password123!",
-      "telefono": "+525511223344",
-      "id": "ecdb241b-5a65-490f-9a5a-bafc4f1b391e",
-      "direcciones": [],
-      "favoritos": [],
+      "telefono": "+525522334455",
+      "is_admin": false,
+      "direcciones": [
+        {
+          "id": "addr-1",
+          "calle": "Av. Insurgentes 456",
+          "ciudad": "CDMX",
+          "codigoPostal": "06700",
+          "esDefault": true
+        }
+      ],
+      "favoritos": ["uuid-001", "uuid-004"],
       "preferencias": {
         "notificacionesPush": true,
-        "tipoLecheFavorita": "Almendra",
+        "tipoLecheFavorita": "Deslactosada",
+        "idioma": "es"
+      }
+    },
+    {
+      "id": "user-uid-002",
+      "nombre": "María García",
+      "email": "maria.garcia@example.com",
+      "password": "Password123!",
+      "telefono": "+525533445566",
+      "is_admin": false,
+      "direcciones": [],
+      "favoritos": ["uuid-005"],
+      "preferencias": {
+        "notificacionesPush": false,
+        "tipoLecheFavorita": "Entera",
         "idioma": "es"
       }
     }
   ],
-  "orders": [],
+  "orders": [
+    {
+      "id": "ORD-2026-001",
+      "user_id": "user-uid-001",
+      "fecha": "2026-05-18T10:30:00.000Z",
+      "total": 157.0,
+      "status": "delivered",
+      "tipoPago": "tarjeta",
+      "items": [
+        {
+          "productId": "uuid-001",
+          "nombre": "Frappé Mocha Blanco",
+          "cantidad": 1,
+          "precio": 89.0,
+          "subtotal": 89.0
+        },
+        {
+          "productId": "uuid-004",
+          "nombre": "Latte Vainilla",
+          "cantidad": 1,
+          "precio": 68.0,
+          "subtotal": 68.0
+        }
+      ],
+      "tracking": {
+        "preparando": true,
+        "listo": true,
+        "enCamino": false,
+        "entregado": true
+      }
+    },
+    {
+      "id": "ORD-2026-002",
+      "user_id": "user-uid-002",
+      "fecha": "2026-05-19T08:45:00.000Z",
+      "total": 65.0,
+      "status": "preparing",
+      "tipoPago": "efectivo",
+      "items": [
+        {
+          "productId": "uuid-005",
+          "nombre": "Cappuccino Clásico",
+          "cantidad": 1,
+          "precio": 65.0,
+          "subtotal": 65.0
+        }
+      ],
+      "tracking": {
+        "preparando": true,
+        "listo": false,
+        "enCamino": false,
+        "entregado": false
+      }
+    },
+    {
+      "id": "ORD-2026-003",
+      "user_id": "user-uid-001",
+      "fecha": "2026-05-19T09:15:00.000Z",
+      "total": 70.0,
+      "status": "pending",
+      "tipoPago": "tarjeta",
+      "items": [
+        {
+          "productId": "uuid-002",
+          "nombre": "Espresso Intenso",
+          "cantidad": 2,
+          "precio": 35.0,
+          "subtotal": 70.0
+        }
+      ],
+      "tracking": {
+        "preparando": false,
+        "listo": false,
+        "enCamino": false,
+        "entregado": false
+      }
+    },
+    {
+      "id": "ORD-2026-004",
+      "user_id": "user-uid-002",
+      "fecha": "2026-05-19T09:40:00.000Z",
+      "total": 89.0,
+      "status": "ready",
+      "tipoPago": "tarjeta",
+      "items": [
+        {
+          "productId": "uuid-001",
+          "nombre": "Frappé Mocha Blanco",
+          "cantidad": 1,
+          "precio": 89.0,
+          "subtotal": 89.0
+        }
+      ],
+      "tracking": {
+        "preparando": true,
+        "listo": true,
+        "enCamino": false,
+        "entregado": false
+      }
+    }
+  ],
   "carts": {
-    "f47ac10b-58cc-4372-a567-0e02b2c3d479": {
+    "user-uid-001": {
       "items": [],
       "total": 0.0,
       "itemsCount": 0
@@ -218,60 +322,10 @@
         "rating": 5,
         "comentario": "¡El mejor café de la zona!",
         "fotos": [],
-        "userId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
+        "userId": "user-uid-001",
         "userName": "Juan Pérez",
         "id": "rev-b224fff0",
         "fecha": "2026-05-12T02:31:45.854555+00:00",
-        "helpful_count": 0
-      },
-      {
-        "rating": 5,
-        "comentario": "¡El mejor café de la zona!",
-        "fotos": [],
-        "userId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-        "userName": "Juan Pérez",
-        "id": "rev-a0a06468",
-        "fecha": "2026-05-12T02:33:37.365498+00:00",
-        "helpful_count": 0
-      },
-      {
-        "rating": 5,
-        "comentario": "Excelente experiencia!",
-        "fotos": [],
-        "userId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-        "userName": "Juan Pérez",
-        "id": "rev-cd231515",
-        "fecha": "2026-05-12T02:57:48.509646+00:00",
-        "helpful_count": 0
-      },
-      {
-        "rating": 5,
-        "comentario": "Excelente servicio!",
-        "fotos": [],
-        "userId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-        "userName": "Juan Pérez",
-        "id": "rev-8faf1f06",
-        "fecha": "2026-05-12T03:24:12.663020+00:00",
-        "helpful_count": 0
-      },
-      {
-        "rating": 5,
-        "comentario": "Excelente servicio!",
-        "fotos": [],
-        "userId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-        "userName": "Juan Pérez",
-        "id": "rev-286e07c7",
-        "fecha": "2026-05-12T03:28:47.857536+00:00",
-        "helpful_count": 0
-      },
-      {
-        "rating": 5,
-        "comentario": "Excelente servicio!",
-        "fotos": [],
-        "userId": "f47ac10b-58cc-4372-a567-0e02b2c3d479",
-        "userName": "Juan Pérez",
-        "id": "rev-7e8532a2",
-        "fecha": "2026-05-12T03:44:26.780239+00:00",
         "helpful_count": 0
       }
     ]
