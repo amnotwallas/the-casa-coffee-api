@@ -1,6 +1,6 @@
 from fastapi import APIRouter, Depends, Header, HTTPException
 from typing import List, Optional
-from app.schemas.admin_schema import AdminAnalytics, UpdateOrderStatusRequest, NotificationRead
+from app.schemas.admin_schema import AdminAnalytics, UpdateOrderStatusRequest, NotificationRead, AdminOrderResponse
 from app.schemas.product_schema import Product, ProductCreate
 from app.services.admin_service import AdminService
 from app.api.dependencies import get_admin_service, get_current_user_required
@@ -41,7 +41,7 @@ async def delete_product(product_id: str, admin_service: AdminService = Depends(
     await admin_service.delete_product(product_id)
     return {"message": "Producto eliminado"}
 
-@router.get("/orders", dependencies=[Depends(verify_admin_access)])
+@router.get("/orders", response_model=List[AdminOrderResponse], dependencies=[Depends(verify_admin_access)])
 async def list_all_orders(admin_service: AdminService = Depends(get_admin_service)):
     """Lista todos los pedidos registrados en el sistema."""
     return await admin_service.list_all_orders()
