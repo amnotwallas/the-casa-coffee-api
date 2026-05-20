@@ -160,40 +160,109 @@ class OrderRepository:
         result = await self.session.execute(statement)
         return result.scalars().all()
 
-    async def list_all_orders(self, limit: int = 50) -> List[Order]:
+    async def list_all_orders(self, limit: int = 50) -> List[tuple]:
         """
-        Retrieve the most recent orders for administrative view.
-        Default limit of 50 prevents memory exhaustion.
+        Retrieve the most recent orders joined with the User to get customer names.
         """
         from sqlalchemy.orm import selectinload
+        from app.models.user import User
+        from app.models.order import Order
+        
         statement = (
-            select(Order)
+            select(Order, User)
+            .join(User, Order.user_id == User.id, isouter=True)
             .options(selectinload(Order.items))
             .order_by(Order.fecha.desc())
             .limit(limit)
         )
         result = await self.session.execute(statement)
-        return result.scalars().all()
+        return result.all() # Returns list of (Order, User) tuples
 
     async def get_analytics_summary(self) -> dict:
         """
-        Perform database-level aggregations for analytics.
+        Perform database-level aggregations for analytics including month sales, top products,
+        and weekly sales distribution.
         """
-        from sqlalchemy import func
-        # 1. Total ventas (Suma de total)
+        from sqlalchemy import func, extract, and_
+        from datetime import datetime, timedelta
+        from app.models.order import OrderItem, Order
+        
+        now = datetime.utcnow()
+        seven_days_ago = now - timedelta(days=7)
+
+        # 1. Total ventas hoy (Históricas para simplificar por ahora)
         stmt_total = select(func.sum(Order.total))
-        # 2. Conteo de pedidos pendientes
+        
+        # 2. Ventas del mes actual
+        stmt_month = select(func.sum(Order.total)).where(
+            extract('month', Order.fecha) == now.month,
+            extract('year', Order.fecha) == now.year
+        )
+        
+        # 3. Conteo de pedidos pendientes
         stmt_pending = select(func.count(Order.id)).where(Order.status == "pending")
+        
+        # 4. Productos Populares (Top 5 por cantidad vendida)
+        stmt_top = (
+            select(OrderItem.nombre, func.sum(OrderItem.cantidad).label("ventas"))
+            .group_by(OrderItem.nombre)
+            .order_by(func.sum(OrderItem.cantidad).desc())
+            .limit(5)
+        )
+
+        # 5. Ventas Semanales (Últimos 7 días agrupados por fecha)
+        # Nota: SQLite no tiene una función sencilla de 'dayname', así que agruparemos por fecha
+        # y mapearemos a nombres de día en Python para máxima compatibilidad.
+        stmt_weekly = (
+            select(func.date(Order.fecha).label("dia"), func.sum(Order.total).label("ventas"))
+            .where(Order.fecha >= seven_days_ago)
+            .group_by(func.date(Order.fecha))
+            .order_by(func.date(Order.fecha))
+        )
 
         total_result = await self.session.execute(stmt_total)
+        month_result = await self.session.execute(stmt_month)
         pending_result = await self.session.execute(stmt_pending)
+        top_result = await self.session.execute(stmt_top)
+        weekly_result = await self.session.execute(stmt_weekly)
 
         total_ventas = total_result.scalar() or 0.0
+        ventas_mes = month_result.scalar() or 0.0
         pending_count = pending_result.scalar() or 0
+        
+        productos_populares = [
+            {"nombre": row[0], "ventas": row[1]} for row in top_result.all()
+        ]
+
+        # Mapeo de nombres de días
+        dias_map = {
+            0: "Lun", 1: "Mar", 2: "Mié", 3: "Jue", 4: "Vie", 5: "Sáb", 6: "Dom"
+        }
+        
+        # Inicializar los últimos 7 días con 0
+        ultimos_7_dias = {}
+        for i in range(7):
+            fecha = (now - timedelta(days=i)).date()
+            ultimos_7_dias[fecha.isoformat()] = {"day": dias_map[fecha.weekday()], "ventas": 0.0}
+
+        for row in weekly_result.all():
+            fecha_str = row[0]
+            if fecha_str in ultimos_7_dias:
+                ultimos_7_dias[fecha_str]["ventas"] = row[1] or 0.0
+
+        # Ordenar cronológicamente (de más antiguo a más reciente)
+        ventas_semanales = sorted(ultimos_7_dias.values(), key=lambda x: list(dias_map.values()).index(x["day"]))
+        # Re-ordenar para que el último día sea hoy (más intuitivo para la gráfica)
+        # En realidad Recharts suele esperar un orden cronológico.
+        # Vamos a simplemente devolverlos en orden de fecha.
+        ventas_semanales = [ultimos_7_dias[d] for d in sorted(ultimos_7_dias.keys())]
 
         return {
             "total_ventas": total_ventas,
-            "pending_count": pending_count
+            "ventas_mes": ventas_mes,
+            "pending_count": pending_count,
+            "productos_populares": productos_populares,
+            "ventas_semanales": ventas_semanales
         }
 
     async def find_order_by_id(self, order_id: str) -> Optional[Order]:

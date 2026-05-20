@@ -21,6 +21,15 @@ class UserRepository:
         result = await self.session.execute(statement)
         return result.scalars().all()
 
+    async def count_customers(self) -> int:
+        """
+        Count total users who are not admins.
+        """
+        from sqlmodel import func
+        statement = select(func.count()).select_from(User).where(User.is_admin == False)
+        result = await self.session.execute(statement)
+        return result.scalar() or 0
+
     async def find_by_email(self, email: str) -> Optional[User]:
         """
         Locate a user by their email address.
