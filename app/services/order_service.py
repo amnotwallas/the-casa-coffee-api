@@ -4,6 +4,7 @@ from app.core.exceptions import EntityNotFoundException, BusinessLogicException,
 from app.repositories.order_repo import OrderRepository
 from app.repositories.product_repo import ProductRepository
 from app.repositories.user_repo import UserRepository
+from app.repositories.admin_repo import AdminRepository
 from app.schemas.cart_schema import Cart, CartItem, AddToCartRequest, UpdateCartItemRequest
 from app.core.logger import get_logger
 
@@ -126,11 +127,12 @@ class OrderService:
     """
     Service layer for processing orders and managing the checkout flow.
     """
-    def __init__(self, order_repo: OrderRepository, cart_service: CartService, user_repo: UserRepository, product_repo: ProductRepository):
+    def __init__(self, order_repo: OrderRepository, cart_service: CartService, user_repo: UserRepository, product_repo: ProductRepository, admin_repo: AdminRepository):
         self.order_repo = order_repo
         self.cart_service = cart_service
         self.user_repo = user_repo
         self.product_repo = product_repo
+        self.admin_repo = admin_repo
 
     async def checkout(self, user_id: str, address_id: str, idempotency_key: str) -> dict:
         """
@@ -180,7 +182,18 @@ class OrderService:
 
         order = await self.order_repo.create_order(new_order_data)
         
-        # 5. Limpiar carrito tras éxito
+        # 5. Generar notificación para el administrador
+        try:
+            customer_name = user.nombre if user else "Cliente"
+            await self.admin_repo.create_notification(
+                type="order",
+                title="Nuevo pedido recibido",
+                body=f"El cliente {customer_name} ha realizado un pedido por ${order.total:.2f}"
+            )
+        except Exception as e:
+            logger.error(f"Error al crear notificación de pedido: {e}")
+
+        # 6. Limpiar carrito tras éxito
         await self.cart_service.clear_cart(user_id)
         
         return {

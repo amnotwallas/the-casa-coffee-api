@@ -3,6 +3,8 @@ from app.core.exceptions import BusinessLogicException, EntityNotFoundException
 from app.repositories.support_repo import SupportRepository
 from app.repositories.product_repo import ProductRepository
 from app.repositories.order_repo import OrderRepository
+from app.repositories.user_repo import UserRepository
+from app.repositories.admin_repo import AdminRepository
 from app.schemas.product_schema import Product as ProductSchema, ProductCreate
 from app.schemas.order_schema import OrderBase
 
@@ -10,10 +12,12 @@ class AdminService:
     """
     Service layer for administrative operations and analytics.
     """
-    def __init__(self, support_repo: SupportRepository, product_repo: ProductRepository, order_repo: OrderRepository):
+    def __init__(self, support_repo: SupportRepository, product_repo: ProductRepository, order_repo: OrderRepository, user_repo: UserRepository, admin_repo: AdminRepository):
         self.support_repo = support_repo
         self.product_repo = product_repo
         self.order_repo = order_repo
+        self.user_repo = user_repo
+        self.admin_repo = admin_repo
 
     async def get_analytics(self) -> dict:
         """
@@ -21,15 +25,35 @@ class AdminService:
         Uses database-level aggregations for efficiency.
         """
         summary = await self.order_repo.get_analytics_summary()
+        clientes = await self.user_repo.count_customers()
+        productos = await self.product_repo.count_products()
+        
         total_ventas = summary["total_ventas"]
         
         return {
             "ventasHoy": total_ventas,
-            "ventasMes": total_ventas * 1.2, # TODO: Implementar lógica real por fechas
+            "ventasMes": summary["ventas_mes"],
             "pedidosPendientes": summary["pending_count"],
-            "productosPopulares": [{"nombre": "Frappé Mocha", "ventas": 15}],
-            "ingresos": {"efectivo": total_ventas * 0.3, "tarjeta": total_ventas * 0.7}
+            "productosPopulares": summary["productos_populares"],
+            "ingresos": {"efectivo": total_ventas * 0.3, "tarjeta": total_ventas * 0.7},
+            "clientesTotales": clientes,
+            "productosTotales": productos,
+            "ventasSemanales": summary.get("ventas_semanales", [])
         }
+
+    async def list_notifications(self, limit: int = 20) -> List[dict]:
+        notifications = await self.admin_repo.get_notifications(limit)
+        return [n.model_dump() for n in notifications]
+
+    async def mark_notification_read(self, notification_id: str) -> dict:
+        updated = await self.admin_repo.mark_as_read(notification_id)
+        if not updated:
+            raise EntityNotFoundException(message="Notification not found")
+        return updated.model_dump()
+
+    async def mark_all_notifications_read(self):
+        await self.admin_repo.mark_all_as_read()
+        return {"message": "Todas las notificaciones marcadas como leídas"}
 
     async def create_product(self, product_in: ProductCreate) -> dict:
         """
@@ -74,8 +98,31 @@ class AdminService:
         """
         Retrieve all orders for administrative review.
         """
-        orders = await self.order_repo.list_all_orders()
-        return [OrderBase.model_validate(o).model_dump() for o in orders]
+        orders_data = await self.order_repo.list_all_orders()
+        result = []
+        for order, user in orders_data:
+            customer_name = user.nombre if user else f"Usuario {order.user_id[:8]}"
+            items_list = []
+            for item in order.items:
+                items_list.append({
+                    "product_id": item.product_id,
+                    "nombre": item.nombre,
+                    "cantidad": item.cantidad,
+                    "precio": item.precio,
+                    "subtotal": item.subtotal
+                })
+                
+            result.append({
+                "id": order.id,
+                "user_id": order.user_id,
+                "customerName": customer_name,
+                "fecha": order.fecha,
+                "items": items_list,
+                "total": order.total,
+                "status": order.status,
+                "tracking": order.tracking
+            })
+        return result
 
     async def update_order_status(self, order_id: str, status: str) -> dict:
         """
