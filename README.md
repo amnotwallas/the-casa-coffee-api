@@ -108,6 +108,15 @@ La API está documentada interactivamente en `/docs` (Swagger) o `/redoc`.
 | `make export` | Genera `requirements.txt` actualizado. |
 | `make clean` | Limpia caches y el entorno virtual. |
 
+## ⚡ Rendimiento y Optimización
+
+La API ha sido optimizada para ofrecer tiempos de respuesta sub-segundo incluso bajo carga:
+
+- **Consultas Paralelas:** Uso de ejecución asíncrona para métricas de Dashboard, reduciendo la latencia de segundos a milisegundos.
+- **Resolución de N+1:** Implementación de carga masiva de productos en el checkout, evitando múltiples llamadas a la base de datos por un solo pedido.
+- **Indexación Estratégica:** Columnas de alto tráfico (`fecha`, `status`) indexadas en PostgreSQL para búsquedas instantáneas.
+- **Arquitectura Eficiente:** Gestión de dependencias con `uv` y ejecución sobre `FastAPI` asíncrono.
+
 ---
 
 ## 🧪 Pruebas y Colecciones

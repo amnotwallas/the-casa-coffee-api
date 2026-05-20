@@ -1,13 +1,13 @@
 {
   "info": {
     "_postman_id": "coffee-api-client-v1",
-    "name": "The Casa Chill & Coffe - CLIENT MASTER",
+    "name": "The Casa Chill & Coffee - CLIENT MASTER",
     "description": "Colección completa para la App de Clientes. Autenticación vía Firebase. IMPORTANTE: Pegar el token obtenido en la variable 'auth_token_client' para que el Runner funcione automáticamente.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
     {
-      "name": "0. Autenticación Firebase (Obtener ID Token)",
+      "name": "0. Autenticación Firebase",
       "item": [
         {
           "name": "Login con Email (Identity Toolkit)",
@@ -41,117 +41,40 @@
         },
         {
           "name": "Sincronizar Usuario (Verify)",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "var jsonData = pm.response.json();",
-                  "if (jsonData.user) {",
-                  "    pm.environment.set(\"auth_token_client\", pm.variables.get(\"auth_token_client\"));",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"firebase_token\": \"{{auth_token_client}}\",\n    \"nombre\": \"Juan Pérez\",\n    \"telefono\": \"+525512345678\"\n}",
+              "raw": "{\n    \"idToken\": \"{{auth_token_client}}\",\n    \"nombre\": \"Juan Pérez\",\n    \"telefono\": \"+525512345678\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": "{{base_url}}/auth/verify"
-          }
-        },
-        {
-          "name": "Cerrar Sesión",
-          "request": {
-            "method": "POST",
-            "url": "{{base_url}}/auth/logout"
           }
         }
       ]
     },
     {
-      "name": "1. Perfil de Usuario",
+      "name": "1. Perfil y Preferencias",
       "item": [
         {
           "name": "Ver Mi Perfil",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/user/profile"
-          }
+          "request": { "method": "GET", "url": "{{base_url}}/user/profile" }
         },
         {
-          "name": "Actualizar Perfil",
-          "request": {
-            "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"nombre\": \"Juan Pérez Actualizado\",\n    \"telefono\": \"+5211223344\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": "{{base_url}}/user/profile"
-          }
+          "name": "Listar Mis Direcciones",
+          "request": { "method": "GET", "url": "{{base_url}}/user/addresses" }
         },
         {
-          "name": "Listar Direcciones",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "var jsonData = pm.response.json();",
-                  "if (jsonData && jsonData.length > 0) {",
-                  "    pm.collectionVariables.set(\"active_address_id\", jsonData[0].id);",
-                  "    pm.environment.set(\"active_address_id\", jsonData[0].id);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/user/addresses"
-          }
-        },
-        {
-          "name": "Añadir Dirección",
+          "name": "Agregar Dirección",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"calle\": \"Reforma 222\",\n    \"ciudad\": \"CDMX\",\n    \"codigoPostal\": \"06600\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n    \"calle\": \"Av. Reforma 123\",\n    \"ciudad\": \"CDMX\",\n    \"codigoPostal\": \"06600\",\n    \"referencia\": \"Portón café\",\n    \"esDefault\": true\n}"
             },
             "url": "{{base_url}}/user/addresses"
-          }
-        },
-        {
-          "name": "Eliminar Dirección",
-          "request": {
-            "method": "DELETE",
-            "url": "{{base_url}}/user/addresses/{{active_address_id}}"
-          }
-        },
-        {
-          "name": "Ver Favoritos",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/user/favorites"
-          }
-        },
-        {
-          "name": "Añadir a Favoritos",
-          "request": {
-            "method": "POST",
-            "url": "{{base_url}}/user/favorites/{{active_product_id}}"
           }
         }
       ]
@@ -160,66 +83,25 @@
       "name": "2. Catálogo de Productos",
       "item": [
         {
-          "name": "Listar Todos los Productos",
-          "event": [
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "var jsonData = pm.response.json();",
-                  "if (jsonData.data && jsonData.data.length > 0) {",
-                  "    pm.collectionVariables.set(\"active_product_id\", jsonData.data[0].id);",
-                  "    pm.environment.set(\"active_product_id\", jsonData.data[0].id);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/products"
-          }
+          "name": "Listar Productos (Paginado)",
+          "request": { "method": "GET", "url": "{{base_url}}/products?limit=10&page=1" }
         },
         {
-          "name": "Filtrar por Categoría (2=Cafés)",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/products?category=2"
-          }
+          "name": "Ver Detalle de Producto",
+          "request": { "method": "GET", "url": "{{base_url}}/products/uuid-001" }
         },
         {
-          "name": "Ver Detalle Producto",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/products/{{active_product_id}}"
-          }
-        },
-        {
-          "name": "Búsqueda Rápida",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/products/search?q=espresso"
-          }
-        },
-        {
-          "name": "Ver Reseñas de Producto",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/products/{{active_product_id}}/reviews"
-          }
+          "name": "Buscar Producto",
+          "request": { "method": "GET", "url": "{{base_url}}/products/search?q=mocha" }
         }
       ]
     },
     {
-      "name": "3. Carrito de Compras",
+      "name": "3. Carrito Persistente",
       "item": [
         {
           "name": "Ver Mi Carrito",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/cart"
-          }
+          "request": { "method": "GET", "url": "{{base_url}}/cart" }
         },
         {
           "name": "Añadir al Carrito",
@@ -228,126 +110,63 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"productId\": \"{{active_product_id}}\",\n    \"cantidad\": 1\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n    \"productId\": \"uuid-001\",\n    \"cantidad\": 2,\n    \"personalizaciones\": {\n        \"Leche\": \"Almendra\",\n        \"Tamaño\": \"Grande\"\n    }\n}"
             },
             "url": "{{base_url}}/cart/add"
-          }
-        },
-        {
-          "name": "Aplicar Cupón",
-          "request": {
-            "method": "POST",
-            "url": "{{base_url}}/cart/apply-coupon?code=COFFEE10"
-          }
-        },
-        {
-          "name": "Vaciar Carrito",
-          "request": {
-            "method": "DELETE",
-            "url": "{{base_url}}/cart/clear"
           }
         }
       ]
     },
     {
-      "name": "4. Pedidos & Tracking",
+      "name": "4. Pedidos y Checkout",
       "item": [
         {
-          "name": "Checkout (Finalizar Pedido)",
-          "event": [
-            {
-              "listen": "prerequest",
-              "script": {
-                "exec": [
-                  "pm.request.headers.add({ key: 'X-Idempotency-Key', value: 'auto-' + pm.variables.replaceIn('{{$guid}}') });"
-                ],
-                "type": "text/javascript"
-              }
-            },
-            {
-              "listen": "test",
-              "script": {
-                "exec": [
-                  "var jsonData = pm.response.json();",
-                  "if (jsonData.orderId) {",
-                  "    pm.collectionVariables.set(\"last_order_id\", jsonData.orderId);",
-                  "    pm.environment.set(\"last_order_id\", jsonData.orderId);",
-                  "}"
-                ],
-                "type": "text/javascript"
-              }
-            }
-          ],
+          "name": "Finalizar Compra (Checkout)",
+          "description": "Crea el pedido con intención de pago real para analíticas.",
           "request": {
             "method": "POST",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Idempotency-Key", "value": "{{$guid}}" }
+            ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"addressId\": \"{{active_address_id}}\",\n    \"tipoPago\": \"tarjeta\",\n    \"tipoPedido\": \"delivery\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n    \"addressId\": \"addr-id-here\",\n    \"tipoPago\": \"tarjeta\",\n    \"tipoPedido\": \"delivery\",\n    \"notas\": \"Sin azúcar por favor\",\n    \"propina\": 15.0\n}"
             },
             "url": "{{base_url}}/orders/checkout"
           }
         },
         {
-          "name": "Mis Pedidos Activos",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/orders/active"
-          }
-        },
-        {
-          "name": "Seguimiento (Tracking)",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/orders/{{last_order_id}}/tracking"
-          }
+          "name": "Ver Mis Pedidos Activos",
+          "request": { "method": "GET", "url": "{{base_url}}/orders/active" }
         }
       ]
     },
     {
-      "name": "5. Soporte & IA",
+      "name": "5. IA & Soporte",
       "item": [
         {
-          "name": "IA - Mensaje Bienvenida",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/chat/welcome"
-          }
-        },
-        {
-          "name": "IA - Enviar Mensaje",
+          "name": "Chat con Barista AI (Streaming)",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"message\": \"¿Tienen café helado?\"\n}",
-              "options": { "raw": { "language": "json" } }
+              "raw": "{\n    \"message\": \"¿Qué me recomiendas para una mañana calurosa?\",\n    \"conversationId\": \"new-session\"\n}"
             },
             "url": "{{base_url}}/chat/message"
           }
         },
         {
-          "name": "Soporte - Horarios",
+          "name": "Obtener Recomendaciones IA",
           "request": {
-            "method": "GET",
-            "url": "{{base_url}}/store/hours"
-          }
-        },
-        {
-          "name": "Soporte - FAQ",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/faq"
-          }
-        },
-        {
-          "name": "Soporte - Notificaciones",
-          "request": {
-            "method": "GET",
-            "url": "{{base_url}}/notifications"
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "[\"dulce\", \"frío\", \"con leche\"]"
+            },
+            "url": "{{base_url}}/chat/recommendations"
           }
         }
       ]
@@ -355,21 +174,11 @@
   ],
   "auth": {
     "type": "bearer",
-    "bearer": [
-      {
-        "key": "token",
-        "value": "{{auth_token_client}}",
-        "type": "string"
-      }
-    ]
+    "bearer": [{ "key": "token", "value": "{{auth_token_client}}", "type": "string" }]
   },
   "variable": [
     { "key": "base_url", "value": "http://localhost:8000/api/v1" },
-    { "key": "firebase_api_key", "value": "PEGAR_API_KEY_AQUI" },
     { "key": "auth_token_client", "value": "" },
-    { "key": "auth_token_client", "value": "" },
-    { "key": "active_product_id", "value": "" },
-    { "key": "active_address_id", "value": "" },
-    { "key": "last_order_id", "value": "" }
+    { "key": "firebase_api_key", "value": "YOUR_FIREBASE_KEY" }
   ]
 }

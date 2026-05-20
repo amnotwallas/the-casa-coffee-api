@@ -1,7 +1,7 @@
 {
   "info": {
     "_postman_id": "coffee-api-admin-v1",
-    "name": "The Casa Chill & Coffe - ADMIN MASTER",
+    "name": "The Casa Chill & Coffee - ADMIN MASTER",
     "description": "Colección MAESTRA de Administración (Seguridad RBAC). Usa la variable auth_token_admin para todas las peticiones.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
@@ -18,9 +18,8 @@
                 "exec": [
                   "var jsonData = pm.response.json();",
                   "if (jsonData.user && jsonData.user.is_admin) {",
-                  "    // Tomamos el token directamente del body que tú enviaste",
                   "    var requestBody = JSON.parse(pm.request.body.raw);",
-                  "    var token = requestBody.firebase_token;",
+                  "    var token = requestBody.idToken;",
                   "    pm.collectionVariables.set(\"auth_token_admin\", token);",
                   "    pm.environment.set(\"auth_token_admin\", token);",
                   "    console.log('✅ auth_token_admin actualizado correctamente');",
@@ -37,7 +36,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"firebase_token\": \"{{auth_token_admin}}\",\n    \"nombre\": \"Admin\"\n}",
+              "raw": "{\n    \"idToken\": \"{{auth_token_admin}}\",\n    \"nombre\": \"Admin\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": "{{base_url}}/auth/login"
@@ -49,7 +48,8 @@
       "name": "1. Dashboard & Analytics",
       "item": [
         {
-          "name": "Ver Analíticas Hoy",
+          "name": "Ver Analíticas Hoy (Optimizadas)",
+          "description": "Obtiene estadísticas de ventas, deltas de crecimiento y desglose de ingresos reales por método de pago.",
           "request": {
             "method": "GET",
             "url": "{{base_url}}/admin/analytics"
@@ -61,7 +61,7 @@
       "name": "2. Gestión de Catálogo",
       "item": [
         {
-          "name": "Listar Todos (y capturar ID)",
+          "name": "Listar Todos los Productos",
           "event": [
             {
               "listen": "test",
@@ -91,7 +91,6 @@
                   "var jsonData = pm.response.json();",
                   "if (jsonData.id) {",
                   "    pm.collectionVariables.set(\"last_admin_product_id\", jsonData.id);",
-                  "    pm.environment.set(\"last_admin_product_id\", jsonData.id);",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -103,7 +102,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"id\": \"latte-auto-{{$randomInt}}\",\n    \"nombre\": \"Café Especial Admin\",\n    \"descripcion\": \"Creado desde el Dashboard\",\n    \"precio\": 65.0,\n    \"intensidad\": 3,\n    \"imagenes\": [\"espresso.png\"],\n    \"category_id\": 2,\n    \"ingredientes\": [\"Calidad Admin\"],\n    \"valores_nutricionales\": {\n        \"calorias\": 100,\n        \"proteinas\": 5.0,\n        \"grasas\": 2.0,\n        \"carbohidratos\": 10.0\n    },\n    \"personalizaciones\": [],\n    \"reviews_count\": 0,\n    \"rating_avg\": 0.0,\n    \"disponible\": true\n}",
+              "raw": "{\n    \"nombre\": \"Café Especial Admin\",\n    \"descripcion\": \"Creado desde el Dashboard\",\n    \"precio\": 65.0,\n    \"intensidad\": 3,\n    \"imagenes\": [\"espresso.png\"],\n    \"category_id\": 2,\n    \"ingredientes\": [\"Calidad Admin\"],\n    \"valores_nutricionales\": {\n        \"calorias\": 100,\n        \"proteinas\": 5.0,\n        \"grasas\": 2.0,\n        \"carbohidratos\": 10.0\n    },\n    \"personalizaciones\": [\n        {\n            \"tipo\": \"Leche\",\n            \"opciones\": [\n                {\"nombre\": \"Entera\", \"extra_precio\": 0.0},\n                {\"nombre\": \"Almendra\", \"extra_precio\": 12.0}\n            ]\n        }\n    ],\n    \"disponible\": true\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": "{{base_url}}/admin/products"
@@ -135,7 +134,8 @@
       "name": "3. Gestión de Pedidos",
       "item": [
         {
-          "name": "Listar Todos los Pedidos",
+          "name": "Listar Todos los Pedidos (con Detalle)",
+          "description": "Lista todos los pedidos incluyendo las personalizaciones de cada item.",
           "event": [
             {
               "listen": "test",
@@ -156,7 +156,7 @@
           }
         },
         {
-          "name": "Avanzar a 'Preparando'",
+          "name": "Actualizar Estado del Pedido",
           "request": {
             "method": "PATCH",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -167,18 +167,31 @@
             },
             "url": "{{base_url}}/admin/orders/{{last_admin_order_id}}/status"
           }
+        }
+      ]
+    },
+    {
+      "name": "4. Notificaciones Admin",
+      "item": [
+        {
+          "name": "Ver Notificaciones Recientes",
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/admin/notifications?limit=20"
+          }
         },
         {
-          "name": "Marcar como 'Listo'",
+          "name": "Marcar Notificación como Leída",
           "request": {
             "method": "PATCH",
-            "header": [{ "key": "Content-Type", "value": "application/json" }],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n    \"status\": \"ready\"\n}",
-              "options": { "raw": { "language": "json" } }
-            },
-            "url": "{{base_url}}/admin/orders/{{last_admin_order_id}}/status"
+            "url": "{{base_url}}/admin/notifications/{{last_admin_notif_id}}/read"
+          }
+        },
+        {
+          "name": "Marcar Todas como Leídas",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/admin/notifications/read-all"
           }
         }
       ]
@@ -198,6 +211,7 @@
     { "key": "base_url", "value": "http://localhost:8000/api/v1" },
     { "key": "auth_token_admin", "value": "" },
     { "key": "last_admin_product_id", "value": "" },
-    { "key": "last_admin_order_id", "value": "" }
+    { "key": "last_admin_order_id", "value": "" },
+    { "key": "last_admin_notif_id", "value": "" }
   ]
 }
