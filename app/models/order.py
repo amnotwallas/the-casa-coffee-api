@@ -24,6 +24,7 @@ class Order(SQLModel, table=True):
     items: List[OrderItem] = Relationship(back_populates="order", sa_relationship_kwargs={"cascade": "all, delete-orphan"})
     
     total: float
+    tipo_pago: str = Field(default="efectivo")
     status: str = "pending"
     tracking: Dict[str, bool] = Field(
         default={
