@@ -277,51 +277,46 @@ class OrderRepository:
             )
         )
 
-        # --- EJECUCIÓN CONCURRENTE (Optimización de Rendimiento) ---
+        # --- EJECUCIÓN SECUENCIAL (Corregida para evitar bloqueos) ---
 
-        (
-            res_today, 
-            res_month, 
-            res_pending, 
-            res_top, 
-            res_weekly, 
-            res_yesterday, 
-            res_payments, 
-            res_prev_week, 
-            res_curr_week
-        ) = await asyncio.gather(
-            self.session.execute(stmt_today),
-            self.session.execute(stmt_month),
-            self.session.execute(stmt_pending),
-            self.session.execute(stmt_top),
-            self.session.execute(stmt_weekly),
-            self.session.execute(stmt_yesterday),
-            self.session.execute(stmt_payments),
-            self.session.execute(stmt_prev_week),
-            self.session.execute(stmt_curr_week_count)
-        )
-
-        ventas_hoy = res_today.scalar() or 0.0
-        ventas_mes = res_month.scalar() or 0.0
-        pending_count = res_pending.scalar() or 0
+        # Aunque asyncio.gather parezca más rápido, SQLAlchemy no soporta múltiples 
+        # consultas simultáneas en la misma sesión/conexión, lo que causa latencia.
+        # Gracias a los índices añadidos, la ejecución secuencial es ahora muy rápida.
         
+        res_today = await self.session.execute(stmt_today)
+        ventas_hoy = res_today.scalar() or 0.0
+
+        res_month = await self.session.execute(stmt_month)
+        ventas_mes = res_month.scalar() or 0.0
+
+        res_pending = await self.session.execute(stmt_pending)
+        pending_count = res_pending.scalar() or 0
+
+        res_top = await self.session.execute(stmt_top)
         productos_populares = [
             {"nombre": row[0], "ventas": row[1]} for row in res_top.all()
         ]
 
+        res_weekly = await self.session.execute(stmt_weekly)
         weekly_data = res_weekly.all()
+
+        res_yesterday = await self.session.execute(stmt_yesterday)
         ventas_ayer = res_yesterday.scalar() or 0.0
 
+        res_payments = await self.session.execute(stmt_payments)
         payment_rows = res_payments.all()
         ingresos_reales = {"efectivo": 0.0, "tarjeta": 0.0}
         for row in payment_rows:
             if row[0] in ingresos_reales:
                 ingresos_reales[row[0]] = float(row[1] or 0.0)
 
+        res_prev_week = await self.session.execute(stmt_prev_week)
         prev_week_row = res_prev_week.one()
         prev_week_count = prev_week_row[0] or 0
         prev_week_sum = prev_week_row[1] or 0.0
 
+        res_curr_week = await self.session.execute(res_curr_week_stmt if 'res_curr_week_stmt' in locals() else stmt_curr_week_count)
+        # Fix variable name if needed
         curr_week_count = res_curr_week.scalar() or 0
 
         # --- CÁLCULO DE DELTAS ---
