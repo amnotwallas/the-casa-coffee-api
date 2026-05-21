@@ -38,9 +38,26 @@ class ProductRepository:
         
         if search:
             search_filter = f"%{search}%"
+            starts_with_filter = f"{search}%"
+            
+            # Filtro de búsqueda
             statement = statement.where(
                 (Product.nombre.ilike(search_filter)) | 
                 (Product.descripcion.ilike(search_filter))
+            )
+            
+            # Prioridad de ordenamiento:
+            # 1. Empieza con el término en el nombre
+            # 2. Contiene el término en el nombre
+            # 3. Lo tiene en la descripción (por defecto si pasó el where)
+            from sqlalchemy import case
+            statement = statement.order_by(
+                case(
+                    (Product.nombre.ilike(starts_with_filter), 1),
+                    (Product.nombre.ilike(search_filter), 2),
+                    else_=3
+                ).asc(),
+                Product.rating_avg.desc() # Criterio secundario
             )
         
         statement = statement.offset(offset).limit(limit)
