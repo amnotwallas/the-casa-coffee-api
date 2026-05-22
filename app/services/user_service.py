@@ -4,6 +4,7 @@ from app.models.user import User
 from app.schemas.user_schema import FirebaseAuthRequest, AuthResponse, UserProfile
 from app.core.logger import get_logger
 from app.core.firebase import verify_firebase_token
+from app.core.security import create_access_token
 from app.core.exceptions import EntityNotFoundException, UnauthorizedException, BusinessLogicException
 
 logger = get_logger(__name__)
@@ -65,8 +66,12 @@ class AuthService:
             if update_fields:
                 user = await self.repository.update(user.id, update_fields)
 
+        # 5. Generar Token de Acceso local (Intercambio)
+        access_token = create_access_token(data={"sub": str(user.id), "email": user.email})
+
         return AuthResponse(
-            user=UserProfile.model_validate(user)
+            user=UserProfile.model_validate(user),
+            access_token=access_token
         )
 
 class UserService:

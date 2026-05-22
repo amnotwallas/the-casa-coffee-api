@@ -39,6 +39,7 @@ class CartService:
             "id": f"citem-{str(uuid.uuid4())[:8]}",
             "product_id": product.id,
             "nombre": product.nombre,
+            "imagen": product.imagenes[0] if product.imagenes else None,
             "cantidad": request.cantidad,
             "precio": product.precio,
             "personalizaciones": request.personalizaciones,
@@ -134,7 +135,11 @@ class OrderService:
         self.product_repo = product_repo
         self.admin_repo = admin_repo
 
-    async def checkout(self, user_id: str, address_id: str, idempotency_key: str, tipo_pago: str = "efectivo") -> dict:
+    async def list_shipping_methods(self) -> List[any]:
+        """List all available shipping methods."""
+        return await self.order_repo.get_shipping_methods()
+
+    async def checkout(self, user_id: str, request: any, idempotency_key: str) -> dict:
         """
         Convert cart items into a finalized order with real-time validation.
         """
@@ -145,12 +150,21 @@ class OrderService:
         if not cart.items:
             raise BusinessLogicException(message="Cart is empty.")
 
-        # 2. Validar propiedad de la dirección (Security Fix)
-        user = await self.user_repo.find_by_id(user_id)
-        if not any(addr.id == address_id for addr in user.direcciones):
-            raise ForbiddenException(message="La dirección seleccionada no pertenece a tu cuenta.")
+        # 2. Validar Método de Envío
+        shipping_method = await self.order_repo.get_shipping_method(request.shippingMethodId)
+        if not shipping_method or not shipping_method.disponible:
+            raise EntityNotFoundException(message="Método de envío no válido o no disponible.")
 
-        # 3. Validar precios y disponibilidad de forma masiva (Optimización N+1)
+        # 3. Validar Dirección si es requerida
+        if shipping_method.requiere_direccion:
+            if not request.addressId:
+                raise BusinessLogicException(message="Este método de envío requiere una dirección.")
+            
+            user = await self.user_repo.find_by_id(user_id)
+            if not any(addr.id == request.addressId for addr in user.direcciones):
+                raise ForbiddenException(message="La dirección seleccionada no pertenece a tu cuenta.")
+
+        # 4. Validar precios y disponibilidad
         product_ids = [item.productId for item in cart.items]
         products_db = await self.product_repo.find_products_by_ids(product_ids)
         product_map = {p.id: p for p in products_db}
@@ -165,11 +179,11 @@ class OrderService:
                     message=f"El producto '{item.nombre}' ya no está disponible."
                 )
             
-            # Usar el precio REAL de la DB, no el del carrito (que podría estar obsoleto)
             verified_subtotal = product.precio * item.cantidad
             verified_items.append({
                 "productId": product.id,
                 "nombre": product.nombre,
+                "imagen": product.imagenes[0] if product.imagenes else None,
                 "cantidad": item.cantidad,
                 "precio": product.precio,
                 "personalizaciones": item.personalizaciones,
@@ -177,28 +191,35 @@ class OrderService:
             })
             verified_total += verified_subtotal
 
-        # 4. Crear la orden con datos verificados
+        # 5. Calcular Total Final con Envío
+        final_total = verified_total + shipping_method.costo
+
+        # 6. Crear la orden
         new_order_data = {
             "user_id": user_id,
             "items": verified_items,
-            "total": verified_total,
-            "tipo_pago": tipo_pago
+            "total": final_total,
+            "tipo_pago": request.tipoPago,
+            "shipping_method_id": shipping_method.id,
+            "costo_envio": shipping_method.costo,
+            "address_id": request.addressId if shipping_method.requiere_direccion else None
         }
 
         order = await self.order_repo.create_order(new_order_data)
         
-        # 5. Generar notificación para el administrador
+        # 7. Generar notificación admin
         try:
-            customer_name = user.nombre if user else "Cliente"
+            user_full = await self.user_repo.find_by_id(user_id)
+            customer_name = user_full.nombre if user_full else "Cliente"
             await self.admin_repo.create_notification(
                 type="order",
                 title="Nuevo pedido recibido",
-                body=f"El cliente {customer_name} ha realizado un pedido por ${order.total:.2f}"
+                body=f"El cliente {customer_name} ha realizado un pedido por ${order.total:.2f} ({shipping_method.nombre})"
             )
         except Exception as e:
             logger.error(f"Error al crear notificación de pedido: {e}")
 
-        # 6. Limpiar carrito tras éxito
+        # 8. Limpiar carrito
         await self.cart_service.clear_cart(user_id)
         
         return {
