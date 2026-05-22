@@ -1,7 +1,10 @@
 {
   "categories": [
     { "id": 1, "nombre": "Bebidas Frías" },
-    { "id": 2, "nombre": "Cafés" }
+    { "id": 2, "nombre": "Bebidas Calientes" },
+    { "id": 3, "nombre": "Sin Café" },
+    { "id": 4, "nombre": "Postres" },
+    { "id": 5, "nombre": "Snacks" }
   ],
   "store_info": {
     "nombre": "The Casa Chill & Coffe - Roma Norte",
@@ -26,6 +29,7 @@
     "tiempo_espera_actual": 15,
     "volumen_pedidos": "medio"
   },
+  
   "products": [
     {
       "id": "uuid-001",
@@ -33,9 +37,9 @@
       "descripcion": "Refrescante mezcla de café espresso, chocolate blanco premium y leche, licuado con hielo.",
       "precio": 89.0,
       "intensidad": 3,
-      "imagenes": ["espresso.png"],
+      "imagenes": ["frappe-capuchino.png"],
       "category_id": 1,
-      "ingredientes": ["Espresso", "Chocolate blanco", "Leche"],
+      "ingredientes": ["Espresso", "Chocolate blanco", "Leche", "Hielo"],
       "valores_nutricionales": {
         "calorias": 420,
         "grasas": 18.0,
@@ -45,14 +49,26 @@
         {
           "tipo": "Tamaño",
           "opciones": [
-            { "nombre": "Chico", "extra_precio": 0 }
+            { "nombre": "Chico", "extra_precio": 0 },
+            { "nombre": "Mediano", "extra_precio": 12.0 },
+            { "nombre": "Grande", "extra_precio": 20.0 }
           ]
         },
         {
           "tipo": "Leche",
           "opciones": [
             { "nombre": "Entera", "extra_precio": 0 },
-            { "nombre": "Almendra", "extra_precio": 12.0 }
+            { "nombre": "Deslactosada", "extra_precio": 5.0 },
+            { "nombre": "Almendra", "extra_precio": 12.0 },
+            { "nombre": "Soya", "extra_precio": 10.0 },
+            { "nombre": "Coco", "extra_precio": 12.0 }
+          ]
+        },
+        {
+          "tipo": "Extras",
+          "opciones": [
+            { "nombre": "Crema batida", "extra_precio": 10.0 },
+            { "nombre": "Shot extra", "extra_precio": 15.0 }
           ]
         }
       ],
@@ -62,6 +78,86 @@
     },
     {
       "id": "uuid-002",
+      "nombre": "Frappé Caramelo",
+      "descripcion": "Deliciosa combinación de café, caramelo y leche, coronado con crema batida y caramelo líquido.",
+      "precio": 85.0,
+      "intensidad": 2,
+      "imagenes": ["frappe-capuchino.png"],
+      "category_id": 1,
+      "ingredientes": ["Espresso", "Jarabe de caramelo", "Leche", "Hielo", "Crema batida"],
+      "valores_nutricionales": {
+        "calorias": 380,
+        "grasas": 15.0,
+        "proteinas": 5.0
+      },
+      "personalizaciones": [
+        {
+          "tipo": "Tamaño",
+          "opciones": [
+            { "nombre": "Chico", "extra_precio": 0 },
+            { "nombre": "Mediano", "extra_precio": 12.0 },
+            { "nombre": "Grande", "extra_precio": 20.0 }
+          ]
+        },
+        {
+          "tipo": "Leche",
+          "opciones": [
+            { "nombre": "Entera", "extra_precio": 0 },
+            { "nombre": "Deslactosada", "extra_precio": 5.0 },
+            { "nombre": "Almendra", "extra_precio": 12.0 },
+            { "nombre": "Soya", "extra_precio": 10.0 },
+            { "nombre": "Coco", "extra_precio": 12.0 }
+          ]
+        },
+        {
+          "tipo": "Extras",
+          "opciones": [
+            { "nombre": "Caramelo extra", "extra_precio": 8.0 },
+            { "nombre": "Shot extra", "extra_precio": 15.0 }
+          ]
+        }
+      ],
+      "rating_avg": 4.7,
+      "reviews_count": 92,
+      "disponible": true
+    },
+    {
+      "id": "uuid-003",
+      "nombre": "Cold Brew Original",
+      "descripcion": "Café preparado en frío durante 12 horas para un sabor suave y naturalmente dulce.",
+      "precio": 72.0,
+      "intensidad": 4,
+      "imagenes": ["cold-brew.png"],
+      "category_id": 1,
+      "ingredientes": ["Café de especialidad", "Agua filtrada"],
+      "valores_nutricionales": {
+        "calorias": 5,
+        "grasas": 0.0,
+        "proteinas": 0.5
+      },
+      "personalizaciones": [
+        {
+          "tipo": "Tamaño",
+          "opciones": [
+            { "nombre": "Chico", "extra_precio": 0 },
+            { "nombre": "Mediano", "extra_precio": 12.0 },
+            { "nombre": "Grande", "extra_precio": 20.0 }
+          ]
+        },
+        {
+          "tipo": "Extras",
+          "opciones": [
+            { "nombre": "Con leche", "extra_precio": 10.0 },
+            { "nombre": "Jarabe de vainilla", "extra_precio": 8.0 }
+          ]
+        }
+      ],
+      "rating_avg": 4.9,
+      "reviews_count": 156,
+      "disponible": true
+    },
+    {
+      "id": "uuid-004",
       "nombre": "Espresso Intenso",
       "descripcion": "Shot puro de café con crema dorada y notas intensas a chocolate.",
       "precio": 35.0,
@@ -74,13 +170,21 @@
         "grasas": 0.0,
         "proteinas": 0.2
       },
-      "personalizaciones": [],
+      "personalizaciones": [
+        {
+          "tipo": "Shots",
+          "opciones": [
+            { "nombre": "Sencillo", "extra_precio": 0 },
+            { "nombre": "Doble", "extra_precio": 20.0 }
+          ]
+        }
+      ],
       "rating_avg": 4.9,
       "reviews_count": 120,
       "disponible": true
     },
     {
-      "id": "uuid-003",
+      "id": "uuid-005",
       "nombre": "Americano Tradicional",
       "descripcion": "Espresso diluido en agua caliente para un sabor suave pero equilibrado.",
       "precio": 42.0,
@@ -97,8 +201,9 @@
         {
           "tipo": "Tamaño",
           "opciones": [
-            { "nombre": "Mediano", "extra_precio": 0 },
-            { "nombre": "Grande", "extra_precio": 10.0 }
+            { "nombre": "Chico", "extra_precio": 0 },
+            { "nombre": "Mediano", "extra_precio": 12.0 },
+            { "nombre": "Grande", "extra_precio": 20.0 }
           ]
         }
       ],
@@ -107,14 +212,14 @@
       "disponible": true
     },
     {
-      "id": "uuid-004",
+      "id": "uuid-006",
       "nombre": "Latte Vainilla",
       "descripcion": "Café espresso combinado con leche vaporizada y un toque de jarabe de vainilla.",
       "precio": 68.0,
       "intensidad": 3,
-      "imagenes": ["espresso.png"],
+      "imagenes": ["latte.png"],
       "category_id": 2,
-      "ingredientes": ["Espresso", "Leche", "Jarabe de vainilla"],
+      "ingredientes": ["Espresso", "Leche vaporizada", "Jarabe de vainilla"],
       "valores_nutricionales": {
         "calorias": 190,
         "grasas": 7.0,
@@ -122,10 +227,28 @@
       },
       "personalizaciones": [
         {
+          "tipo": "Tamaño",
+          "opciones": [
+            { "nombre": "Chico", "extra_precio": 0 },
+            { "nombre": "Mediano", "extra_precio": 12.0 },
+            { "nombre": "Grande", "extra_precio": 20.0 }
+          ]
+        },
+        {
           "tipo": "Leche",
           "opciones": [
             { "nombre": "Entera", "extra_precio": 0 },
-            { "nombre": "Deslactosada", "extra_precio": 5.0 }
+            { "nombre": "Deslactosada", "extra_precio": 5.0 },
+            { "nombre": "Almendra", "extra_precio": 12.0 },
+            { "nombre": "Soya", "extra_precio": 10.0 },
+            { "nombre": "Coco", "extra_precio": 12.0 }
+          ]
+        },
+        {
+          "tipo": "Extras",
+          "opciones": [
+            { "nombre": "Shot extra", "extra_precio": 15.0 },
+            { "nombre": "Jarabe adicional", "extra_precio": 8.0 }
           ]
         }
       ],
@@ -134,12 +257,57 @@
       "disponible": true
     },
     {
-      "id": "uuid-005",
+      "id": "uuid-007",
+      "nombre": "Latte Caramel Macchiato",
+      "descripcion": "Espresso con leche vaporizada, jarabe de vainilla y un toque de caramelo encima.",
+      "precio": 75.0,
+      "intensidad": 3,
+      "imagenes": ["latte.png"],
+      "category_id": 2,
+      "ingredientes": ["Espresso", "Leche vaporizada", "Jarabe de vainilla", "Caramelo"],
+      "valores_nutricionales": {
+        "calorias": 240,
+        "grasas": 9.0,
+        "proteinas": 9.0
+      },
+      "personalizaciones": [
+        {
+          "tipo": "Tamaño",
+          "opciones": [
+            { "nombre": "Chico", "extra_precio": 0 },
+            { "nombre": "Mediano", "extra_precio": 12.0 },
+            { "nombre": "Grande", "extra_precio": 20.0 }
+          ]
+        },
+        {
+          "tipo": "Leche",
+          "opciones": [
+            { "nombre": "Entera", "extra_precio": 0 },
+            { "nombre": "Deslactosada", "extra_precio": 5.0 },
+            { "nombre": "Almendra", "extra_precio": 12.0 },
+            { "nombre": "Soya", "extra_precio": 10.0 },
+            { "nombre": "Coco", "extra_precio": 12.0 }
+          ]
+        },
+        {
+          "tipo": "Extras",
+          "opciones": [
+            { "nombre": "Shot extra", "extra_precio": 15.0 },
+            { "nombre": "Caramelo extra", "extra_precio": 8.0 }
+          ]
+        }
+      ],
+      "rating_avg": 4.9,
+      "reviews_count": 178,
+      "disponible": true
+    },
+    {
+      "id": "uuid-008",
       "nombre": "Cappuccino Clásico",
       "descripcion": "Balance perfecto de café, leche vaporizada y abundante espuma.",
       "precio": 65.0,
       "intensidad": 3,
-      "imagenes": ["espresso.png"],
+      "imagenes": ["capuchino.png"],
       "category_id": 2,
       "ingredientes": ["Espresso", "Leche vaporizada", "Espuma de leche"],
       "valores_nutricionales": {
@@ -147,19 +315,449 @@
         "grasas": 5.0,
         "proteinas": 6.0
       },
-      "personalizaciones": [],
+      "personalizaciones": [
+        {
+          "tipo": "Tamaño",
+          "opciones": [
+            { "nombre": "Chico", "extra_precio": 0 },
+            { "nombre": "Mediano", "extra_precio": 12.0 },
+            { "nombre": "Grande", "extra_precio": 20.0 }
+          ]
+        },
+        {
+          "tipo": "Leche",
+          "opciones": [
+            { "nombre": "Entera", "extra_precio": 0 },
+            { "nombre": "Deslactosada", "extra_precio": 5.0 },
+            { "nombre": "Almendra", "extra_precio": 12.0 },
+            { "nombre": "Soya", "extra_precio": 10.0 },
+            { "nombre": "Coco", "extra_precio": 12.0 }
+          ]
+        },
+        {
+          "tipo": "Extras",
+          "opciones": [
+            { "nombre": "Shot extra", "extra_precio": 15.0 },
+            { "nombre": "Canela", "extra_precio": 0.0 }
+          ]
+        }
+      ],
       "rating_avg": 4.8,
       "reviews_count": 110,
+      "disponible": true
+    },
+    {
+      "id": "uuid-009",
+      "nombre": "Mocha Chocolate",
+      "descripcion": "Espresso con chocolate oscuro, leche vaporizada y crema batida.",
+      "precio": 78.0,
+      "intensidad": 3,
+      "imagenes": ["capuchino.png"],
+      "category_id": 2,
+      "ingredientes": ["Espresso", "Chocolate oscuro", "Leche vaporizada", "Crema batida"],
+      "valores_nutricionales": {
+        "calorias": 290,
+        "grasas": 13.0,
+        "proteinas": 10.0
+      },
+      "personalizaciones": [
+        {
+          "tipo": "Tamaño",
+          "opciones": [
+            { "nombre": "Chico", "extra_precio": 0 },
+            { "nombre": "Mediano", "extra_precio": 12.0 },
+            { "nombre": "Grande", "extra_precio": 20.0 }
+          ]
+        },
+        {
+          "tipo": "Leche",
+          "opciones": [
+            { "nombre": "Entera", "extra_precio": 0 },
+            { "nombre": "Deslactosada", "extra_precio": 5.0 },
+            { "nombre": "Almendra", "extra_precio": 12.0 },
+            { "nombre": "Soya", "extra_precio": 10.0 },
+            { "nombre": "Coco", "extra_precio": 12.0 }
+          ]
+        },
+        {
+          "tipo": "Extras",
+          "opciones": [
+            { "nombre": "Shot extra", "extra_precio": 15.0 },
+            { "nombre": "Chocolate blanco", "extra_precio": 5.0 }
+          ]
+        }
+      ],
+      "rating_avg": 4.8,
+      "reviews_count": 134,
+      "disponible": true
+    },
+    {
+      "id": "uuid-010",
+      "nombre": "Chocolate Caliente",
+      "descripcion": "Chocolate belga derretido con leche caliente y crema batida.",
+      "precio": 62.0,
+      "intensidad": 0,
+      "imagenes": ["capuchino.png"],
+      "category_id": 3,
+      "ingredientes": ["Chocolate belga", "Leche", "Crema batida"],
+      "valores_nutricionales": {
+        "calorias": 310,
+        "grasas": 14.0,
+        "proteinas": 9.0
+      },
+      "personalizaciones": [
+        {
+          "tipo": "Tamaño",
+          "opciones": [
+            { "nombre": "Chico", "extra_precio": 0 },
+            { "nombre": "Mediano", "extra_precio": 12.0 },
+            { "nombre": "Grande", "extra_precio": 20.0 }
+          ]
+        },
+        {
+          "tipo": "Leche",
+          "opciones": [
+            { "nombre": "Entera", "extra_precio": 0 },
+            { "nombre": "Deslactosada", "extra_precio": 5.0 },
+            { "nombre": "Almendra", "extra_precio": 12.0 },
+            { "nombre": "Soya", "extra_precio": 10.0 },
+            { "nombre": "Coco", "extra_precio": 12.0 }
+          ]
+        },
+        {
+          "tipo": "Extras",
+          "opciones": [
+            { "nombre": "Malvaviscos", "extra_precio": 8.0 },
+            { "nombre": "Chispas de chocolate", "extra_precio": 8.0 }
+          ]
+        }
+      ],
+      "rating_avg": 4.7,
+      "reviews_count": 88,
+      "disponible": true
+    },
+    {
+      "id": "uuid-011",
+      "nombre": "Té Chai Latte",
+      "descripcion": "Mezcla aromática de té negro con especias, leche vaporizada y un toque de miel.",
+      "precio": 58.0,
+      "intensidad": 0,
+      "imagenes": ["latte.png"],
+      "category_id": 3,
+      "ingredientes": ["Té chai", "Leche vaporizada", "Especias", "Miel"],
+      "valores_nutricionales": {
+        "calorias": 180,
+        "grasas": 6.0,
+        "proteinas": 7.0
+      },
+      "personalizaciones": [
+        {
+          "tipo": "Tamaño",
+          "opciones": [
+            { "nombre": "Chico", "extra_precio": 0 },
+            { "nombre": "Mediano", "extra_precio": 12.0 },
+            { "nombre": "Grande", "extra_precio": 20.0 }
+          ]
+        },
+        {
+          "tipo": "Leche",
+          "opciones": [
+            { "nombre": "Entera", "extra_precio": 0 },
+            { "nombre": "Deslactosada", "extra_precio": 5.0 },
+            { "nombre": "Almendra", "extra_precio": 12.0 },
+            { "nombre": "Soya", "extra_precio": 10.0 },
+            { "nombre": "Coco", "extra_precio": 12.0 }
+          ]
+        },
+        {
+          "tipo": "Extras",
+          "opciones": [
+            { "nombre": "Miel extra", "extra_precio": 5.0 },
+            { "nombre": "Canela", "extra_precio": 0.0 }
+          ]
+        }
+      ],
+      "rating_avg": 4.6,
+      "reviews_count": 67,
+      "disponible": true
+    },
+    {
+      "id": "uuid-012",
+      "nombre": "Matcha Latte",
+      "descripcion": "Té verde matcha premium japonés con leche vaporizada.",
+      "precio": 75.0,
+      "intensidad": 0,
+      "imagenes": ["latte.png"],
+      "category_id": 3,
+      "ingredientes": ["Matcha orgánico", "Leche vaporizada"],
+      "valores_nutricionales": {
+        "calorias": 140,
+        "grasas": 5.0,
+        "proteinas": 7.0
+      },
+      "personalizaciones": [
+        {
+          "tipo": "Tamaño",
+          "opciones": [
+            { "nombre": "Chico", "extra_precio": 0 },
+            { "nombre": "Mediano", "extra_precio": 12.0 },
+            { "nombre": "Grande", "extra_precio": 20.0 }
+          ]
+        },
+        {
+          "tipo": "Leche",
+          "opciones": [
+            { "nombre": "Entera", "extra_precio": 0 },
+            { "nombre": "Deslactosada", "extra_precio": 5.0 },
+            { "nombre": "Almendra", "extra_precio": 12.0 },
+            { "nombre": "Soya", "extra_precio": 10.0 },
+            { "nombre": "Coco", "extra_precio": 12.0 }
+          ]
+        },
+        {
+          "tipo": "Extras",
+          "opciones": [
+            { "nombre": "Miel", "extra_precio": 5.0 },
+            { "nombre": "Jarabe de vainilla", "extra_precio": 8.0 }
+          ]
+        }
+      ],
+      "rating_avg": 4.7,
+      "reviews_count": 102,
+      "disponible": true
+    },
+    {
+      "id": "uuid-013",
+      "nombre": "Limonada Mineral",
+      "descripcion": "Refrescante limonada natural con agua mineral y hierbabuena.",
+      "precio": 45.0,
+      "intensidad": 0,
+      "imagenes": ["cold-brew.png"],
+      "category_id": 3,
+      "ingredientes": ["Limón natural", "Agua mineral", "Hierbabuena", "Azúcar"],
+      "valores_nutricionales": {
+        "calorias": 95,
+        "grasas": 0.0,
+        "proteinas": 0.2
+      },
+      "personalizaciones": [
+        {
+          "tipo": "Tamaño",
+          "opciones": [
+            { "nombre": "Chico", "extra_precio": 0 },
+            { "nombre": "Mediano", "extra_precio": 12.0 },
+            { "nombre": "Grande", "extra_precio": 20.0 }
+          ]
+        },
+        {
+          "tipo": "Extras",
+          "opciones": [
+            { "nombre": "Hierbabuena extra", "extra_precio": 5.0 },
+            { "nombre": "Jengibre", "extra_precio": 8.0 }
+          ]
+        }
+      ],
+      "rating_avg": 4.5,
+      "reviews_count": 73,
+      "disponible": true
+    },
+    {
+      "id": "uuid-014",
+      "nombre": "Brownie de Chocolate",
+      "descripcion": "Brownie casero de chocolate belga con nueces y servido tibio.",
+      "precio": 55.0,
+      "intensidad": 0,
+      "imagenes": ["espresso.png"],
+      "category_id": 4,
+      "ingredientes": ["Chocolate belga", "Nueces", "Mantequilla", "Huevo", "Harina"],
+      "valores_nutricionales": {
+        "calorias": 380,
+        "grasas": 22.0,
+        "proteinas": 5.0
+      },
+      "personalizaciones": [
+        {
+          "tipo": "Extras",
+          "opciones": [
+            { "nombre": "Helado de vainilla", "extra_precio": 25.0 },
+            { "nombre": "Salsa de chocolate", "extra_precio": 10.0 }
+          ]
+        }
+      ],
+      "rating_avg": 4.9,
+      "reviews_count": 201,
+      "disponible": true
+    },
+    {
+      "id": "uuid-015",
+      "nombre": "Cheesecake de Frutos Rojos",
+      "descripcion": "Cremoso cheesecake de queso Philadelphia con coulis de frutos rojos.",
+      "precio": 68.0,
+      "intensidad": 0,
+      "imagenes": ["espresso.png"],
+      "category_id": 4,
+      "ingredientes": ["Queso crema", "Galleta", "Frutos rojos", "Crema"],
+      "valores_nutricionales": {
+        "calorias": 420,
+        "grasas": 28.0,
+        "proteinas": 7.0
+      },
+      "personalizaciones": [
+        {
+          "tipo": "Extras",
+          "opciones": [
+            { "nombre": "Frutos rojos extra", "extra_precio": 15.0 },
+            { "nombre": "Crema batida", "extra_precio": 10.0 }
+          ]
+        }
+      ],
+      "rating_avg": 4.8,
+      "reviews_count": 145,
+      "disponible": true
+    },
+    {
+      "id": "uuid-016",
+      "nombre": "Pie de Manzana",
+      "descripcion": "Tradicional pay de manzana con canela, servido tibio.",
+      "precio": 58.0,
+      "intensidad": 0,
+      "imagenes": ["espresso.png"],
+      "category_id": 4,
+      "ingredientes": ["Manzana", "Canela", "Masa casera", "Azúcar"],
+      "valores_nutricionales": {
+        "calorias": 310,
+        "grasas": 14.0,
+        "proteinas": 3.0
+      },
+      "personalizaciones": [
+        {
+          "tipo": "Extras",
+          "opciones": [
+            { "nombre": "Helado de vainilla", "extra_precio": 25.0 },
+            { "nombre": "Crema batida", "extra_precio": 10.0 }
+          ]
+        }
+      ],
+      "rating_avg": 4.7,
+      "reviews_count": 98,
+      "disponible": true
+    },
+    {
+      "id": "uuid-017",
+      "nombre": "Croissant de Almendra",
+      "descripcion": "Croissant francés relleno de crema de almendra y espolvoreado con azúcar glass.",
+      "precio": 48.0,
+      "intensidad": 0,
+      "imagenes": ["espresso.png"],
+      "category_id": 5,
+      "ingredientes": ["Hojaldre", "Crema de almendra", "Almendras fileteadas", "Azúcar glass"],
+      "valores_nutricionales": {
+        "calorias": 280,
+        "grasas": 16.0,
+        "proteinas": 6.0
+      },
+      "personalizaciones": [
+        {
+          "tipo": "Extras",
+          "opciones": [
+            { "nombre": "Mermelada", "extra_precio": 10.0 },
+            { "nombre": "Nutella", "extra_precio": 15.0 }
+          ]
+        }
+      ],
+      "rating_avg": 4.8,
+      "reviews_count": 112,
+      "disponible": true
+    },
+    {
+      "id": "uuid-018",
+      "nombre": "Bagel con Queso Crema",
+      "descripcion": "Bagel tostado con queso crema natural y tu elección de topping.",
+      "precio": 52.0,
+      "intensidad": 0,
+      "imagenes": ["espresso.png"],
+      "category_id": 5,
+      "ingredientes": ["Bagel", "Queso crema"],
+      "valores_nutricionales": {
+        "calorias": 290,
+        "grasas": 11.0,
+        "proteinas": 11.0
+      },
+      "personalizaciones": [
+        {
+          "tipo": "Extras",
+          "opciones": [
+            { "nombre": "Salmón ahumado", "extra_precio": 35.0 },
+            { "nombre": "Mermelada", "extra_precio": 10.0 },
+            { "nombre": "Aguacate", "extra_precio": 15.0 }
+          ]
+        }
+      ],
+      "rating_avg": 4.6,
+      "reviews_count": 87,
+      "disponible": true
+    },
+    {
+      "id": "uuid-019",
+      "nombre": "Muffin de Arándanos",
+      "descripcion": "Esponjoso muffin con arándanos frescos y streusel de mantequilla.",
+      "precio": 42.0,
+      "intensidad": 0,
+      "imagenes": ["espresso.png"],
+      "category_id": 5,
+      "ingredientes": ["Arándanos", "Harina", "Mantequilla", "Huevo", "Azúcar"],
+      "valores_nutricionales": {
+        "calorias": 340,
+        "grasas": 14.0,
+        "proteinas": 5.0
+      },
+      "personalizaciones": [
+        {
+          "tipo": "Extras",
+          "opciones": [
+            { "nombre": "Mantequilla", "extra_precio": 5.0 },
+            { "nombre": "Mermelada", "extra_precio": 8.0 }
+          ]
+        }
+      ],
+      "rating_avg": 4.7,
+      "reviews_count": 94,
+      "disponible": true
+    },
+    {
+      "id": "uuid-020",
+      "nombre": "Sandwich Caprese",
+      "descripcion": "Pan ciabatta con mozzarella fresca, tomate, albahaca y reducción de balsámico.",
+      "precio": 78.0,
+      "intensidad": 0,
+      "imagenes": ["espresso.png"],
+      "category_id": 5,
+      "ingredientes": ["Pan ciabatta", "Mozzarella", "Tomate", "Albahaca", "Balsámico"],
+      "valores_nutricionales": {
+        "calorias": 380,
+        "grasas": 18.0,
+        "proteinas": 16.0
+      },
+      "personalizaciones": [
+        {
+          "tipo": "Extras",
+          "opciones": [
+            { "nombre": "Aguacate", "extra_precio": 15.0 },
+            { "nombre": "Prosciutto", "extra_precio": 25.0 }
+          ]
+        }
+      ],
+      "rating_avg": 4.8,
+      "reviews_count": 76,
       "disponible": true
     }
   ],
   "users": [
     {
       "id": "admin-uid-999",
+      "firebase_uid": "aQ09RVfUS4MSnc6gVtSLWYZH2c03",
       "nombre": "Administrador",
       "email": "admin@thecasa.com",
-      "password": "Password123!",
-      "telefono": "+525511223344",
       "is_admin": true,
       "direcciones": [],
       "favoritos": [],
@@ -171,10 +769,9 @@
     },
     {
       "id": "user-uid-001",
-      "nombre": "Juan Pérez",
-      "email": "juan.perez@example.com",
-      "password": "Password123!",
-      "telefono": "+525522334455",
+      "firebase_uid": "uNL8szuadTRIkzs157JHEwJfyNL2",
+      "nombre": "Usuario Test",
+      "email": "test@coffee.com",
       "is_admin": false,
       "direcciones": [
         {
@@ -189,21 +786,6 @@
       "preferencias": {
         "notificacionesPush": true,
         "tipoLecheFavorita": "Deslactosada",
-        "idioma": "es"
-      }
-    },
-    {
-      "id": "user-uid-002",
-      "nombre": "María García",
-      "email": "maria.garcia@example.com",
-      "password": "Password123!",
-      "telefono": "+525533445566",
-      "is_admin": false,
-      "direcciones": [],
-      "favoritos": ["uuid-005"],
-      "preferencias": {
-        "notificacionesPush": false,
-        "tipoLecheFavorita": "Entera",
         "idioma": "es"
       }
     }
