@@ -14,7 +14,7 @@ from app.services.support_service import SupportService
 from app.services.admin_service import AdminService
 from app.ai.providers.groq_provider import GroqProvider
 from app.ai.services.agent_service import AgentService
-from app.core.firebase import verify_firebase_token
+from app.core.security import verify_token
 
 # --- PROVIDERS ---
 _ai_provider = GroqProvider()
@@ -151,27 +151,27 @@ async def get_current_user(
     try:
         token = authorization.split(" ")[1]
         
-        # 1. Verify token with Firebase Admin
-        decoded_token = verify_firebase_token(token)
-        if not decoded_token:
+        # 1. Verify local JWT token
+        payload = verify_token(token)
+        user_id = payload.get("sub")
+        
+        if not user_id:
             if required:
-                raise HTTPException(status_code=401, detail="Firebase token expired or invalid.")
+                raise HTTPException(status_code=401, detail="Invalid token payload.")
             return None
         
-        firebase_uid = decoded_token.get("uid")
-        
-        # 2. Sync with local database
-        user = await user_repo.find_by_firebase_uid(firebase_uid)
+        # 2. Get user from local database by ID
+        user = await user_repo.find_by_id(user_id)
         
         if user:
             return user.model_dump()
                 
         if required:
-            raise HTTPException(status_code=401, detail="User not registered in the local system.")
+            raise HTTPException(status_code=401, detail="User not found in system.")
         return None
-    except Exception:
+    except Exception as e:
         if required:
-            raise HTTPException(status_code=401, detail="Identity validation failed.")
+            raise HTTPException(status_code=401, detail=f"Identity validation failed: {str(e)}")
         return None
 
 async def get_current_user_required(
