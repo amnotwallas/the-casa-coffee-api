@@ -1,10 +1,17 @@
 from fastapi import APIRouter, Depends, Header, HTTPException
 from typing import List
-from app.schemas.order_schema import OrderCheckoutRequest, OrderResponse, OrderBase
+from app.schemas.order_schema import OrderCheckoutRequest, OrderResponse, OrderBase, ShippingMethodResponse
 from app.services.order_service import OrderService
 from app.api.dependencies import get_order_service, get_current_user_required
 
 router = APIRouter(prefix="/orders", tags=["Orders"])
+
+@router.get("/shipping-methods", response_model=List[ShippingMethodResponse])
+async def list_shipping_methods(
+    order_service: OrderService = Depends(get_order_service)
+):
+    """List available shipping and pickup methods with costs."""
+    return await order_service.list_shipping_methods()
 
 @router.post("/checkout", response_model=OrderResponse, status_code=201)
 async def checkout(
@@ -14,7 +21,11 @@ async def checkout(
     current_user: dict = Depends(get_current_user_required)
 ):
     """Finaliza la compra. REQUIERE LOGIN."""
-    return await order_service.checkout(current_user["id"], request.addressId, x_idempotency_key, request.tipoPago)
+    return await order_service.checkout(
+        user_id=current_user["id"],
+        request=request,
+        idempotency_key=x_idempotency_key
+    )
 
 @router.get("/", response_model=List[OrderBase])
 async def list_orders(

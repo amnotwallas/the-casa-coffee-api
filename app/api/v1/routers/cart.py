@@ -12,7 +12,7 @@ async def get_cart(
 ):
     """Obtiene el carrito. Si no hay login, devuelve carrito vacío."""
     if not current_user:
-        return Cart()
+        return {"items": [], "total": 0.0, "itemsCount": 0}
     return await cart_service.get_user_cart(current_user["id"])
 
 @router.post("/add", response_model=Cart)
