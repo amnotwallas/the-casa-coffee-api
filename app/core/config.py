@@ -11,6 +11,8 @@ class Settings(BaseSettings):
     # --- Firebase Configuration ---
     FIREBASE_CREDENTIALS: Optional[str] = None # Path to service account JSON
     SECRET_KEY: str = "dev_secret_key_64_chars_long_placeholder"
+    JWT_ALGORITHM: str = "HS256"
+    ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24 # 24 hours
     ADMIN_SECRET_TOKEN: str = "dev_admin_token_placeholder"
     DATABASE_URL: str = "" # Injected from environment (Supabase)
     
