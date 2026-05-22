@@ -65,5 +65,5 @@ class FirebaseAuthRequest(BaseModel):
 
 class AuthResponse(BaseModel):
     user: UserProfile
-    # El token real lo gestiona Firebase en el cliente, 
-    # pero podemos retornar el perfil confirmado.
+    access_token: str
+    token_type: str = "bearer"
