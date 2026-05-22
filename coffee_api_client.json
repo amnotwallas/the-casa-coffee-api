@@ -2,7 +2,7 @@
   "info": {
     "_postman_id": "coffee-api-client-v1",
     "name": "The Casa Chill & Coffee - CLIENT MASTER",
-    "description": "Colección completa para la App de Clientes. Autenticación vía Firebase. IMPORTANTE: Pegar el token obtenido en la variable 'auth_token_client' para que el Runner funcione automáticamente.",
+    "description": "Colección completa para la App de Clientes. Autenticación vía Firebase + JWT Local. Flujo: 1. Login Firebase -> 2. Verify API -> 3. Usar JWT Local.",
     "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
   },
   "item": [
@@ -18,9 +18,9 @@
                 "exec": [
                   "var jsonData = pm.response.json();",
                   "if (jsonData.idToken) {",
-                  "    pm.collectionVariables.set(\"auth_token_client\", jsonData.idToken);",
-                  "    pm.environment.set(\"auth_token_client\", jsonData.idToken);",
-                  "    console.log('Token guardado exitosamente');",
+                  "    pm.collectionVariables.set(\"auth_token_firebase_client\", jsonData.idToken);",
+                  "    pm.environment.set(\"auth_token_firebase_client\", jsonData.idToken);",
+                  "    console.log('Token Firebase guardado');",
                   "}"
                 ],
                 "type": "text/javascript"
@@ -41,25 +41,60 @@
         },
         {
           "name": "Sincronizar Usuario (Verify)",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.access_token) {",
+                  "    pm.collectionVariables.set(\"auth_token_client\", jsonData.access_token);",
+                  "    pm.environment.set(\"auth_token_client\", jsonData.access_token);",
+                  "    console.log('✅ JWT Local guardado exitosamente');",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"idToken\": \"{{auth_token_client}}\",\n    \"nombre\": \"Juan Pérez\",\n    \"telefono\": \"+525512345678\"\n}",
+              "raw": "{\n    \"firebase_token\": \"{{auth_token_firebase_client}}\",\n    \"nombre\": \"Usuario Test\",\n    \"telefono\": \"+525512345678\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": "{{base_url}}/auth/verify"
+          }
+        },
+        {
+          "name": "Logout (Local)",
+          "request": {
+            "method": "POST",
+            "url": "{{base_url}}/auth/logout"
           }
         }
       ]
     },
     {
-      "name": "1. Perfil y Preferencias",
+      "name": "1. Perfil y Usuario",
       "item": [
         {
           "name": "Ver Mi Perfil",
           "request": { "method": "GET", "url": "{{base_url}}/user/profile" }
+        },
+        {
+          "name": "Actualizar Mi Perfil",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"nombre\": \"Juan Pérez Actualizado\",\n    \"telefono\": \"+525588776655\"\n}"
+            },
+            "url": "{{base_url}}/user/profile"
+          }
         },
         {
           "name": "Listar Mis Direcciones",
@@ -67,6 +102,18 @@
         },
         {
           "name": "Agregar Dirección",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.id) { pm.collectionVariables.set(\"last_address_id\", jsonData.id); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -76,6 +123,22 @@
             },
             "url": "{{base_url}}/user/addresses"
           }
+        },
+        {
+          "name": "Eliminar Dirección",
+          "request": { "method": "DELETE", "url": "{{base_url}}/user/addresses/{{last_address_id}}" }
+        },
+        {
+          "name": "Listar Mis Favoritos",
+          "request": { "method": "GET", "url": "{{base_url}}/user/favorites" }
+        },
+        {
+          "name": "Agregar a Favoritos",
+          "request": { "method": "POST", "url": "{{base_url}}/user/favorites/uuid-001" }
+        },
+        {
+          "name": "Eliminar de Favoritos",
+          "request": { "method": "DELETE", "url": "{{base_url}}/user/favorites/uuid-001" }
         }
       ]
     },
@@ -87,12 +150,36 @@
           "request": { "method": "GET", "url": "{{base_url}}/products?limit=10&page=1" }
         },
         {
-          "name": "Ver Detalle de Producto",
-          "request": { "method": "GET", "url": "{{base_url}}/products/uuid-001" }
+          "name": "Listar Categorías",
+          "request": { "method": "GET", "url": "{{base_url}}/products/categories" }
+        },
+        {
+          "name": "Productos Destacados",
+          "request": { "method": "GET", "url": "{{base_url}}/products/featured" }
         },
         {
           "name": "Buscar Producto",
           "request": { "method": "GET", "url": "{{base_url}}/products/search?q=mocha" }
+        },
+        {
+          "name": "Ver Detalle de Producto",
+          "request": { "method": "GET", "url": "{{base_url}}/products/uuid-001" }
+        },
+        {
+          "name": "Ver Reseñas de Producto",
+          "request": { "method": "GET", "url": "{{base_url}}/products/uuid-001/reviews" }
+        },
+        {
+          "name": "Enviar Reseña",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"rating\": 5,\n    \"comentario\": \"¡Excelente sabor!\",\n    \"fotos\": []\n}"
+            },
+            "url": "{{base_url}}/products/uuid-001/reviews"
+          }
         }
       ]
     },
@@ -105,6 +192,20 @@
         },
         {
           "name": "Añadir al Carrito",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.items && jsonData.items.length > 0) {",
+                  "    pm.collectionVariables.set(\"last_cart_item_id\", jsonData.items[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -114,6 +215,30 @@
             },
             "url": "{{base_url}}/cart/add"
           }
+        },
+        {
+          "name": "Actualizar Item del Carrito",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"cantidad\": 3\n}"
+            },
+            "url": "{{base_url}}/cart/item/{{last_cart_item_id}}"
+          }
+        },
+        {
+          "name": "Eliminar Item del Carrito",
+          "request": { "method": "DELETE", "url": "{{base_url}}/cart/item/{{last_cart_item_id}}" }
+        },
+        {
+          "name": "Vaciar Carrito",
+          "request": { "method": "DELETE", "url": "{{base_url}}/cart/clear" }
+        },
+        {
+          "name": "Aplicar Cupón",
+          "request": { "method": "POST", "url": "{{base_url}}/cart/apply-coupon?code=COFFEE10" }
         }
       ]
     },
@@ -121,8 +246,23 @@
       "name": "4. Pedidos y Checkout",
       "item": [
         {
-          "name": "Finalizar Compra (Checkout)",
-          "description": "Crea el pedido con intención de pago real para analíticas.",
+          "name": "Listar Métodos de Envío",
+          "request": { "method": "GET", "url": "{{base_url}}/orders/shipping-methods" }
+        },
+        {
+          "name": "Finalizar Compra - Envío a Domicilio",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData.orderId) { pm.collectionVariables.set(\"last_order_id\", jsonData.orderId); }"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
           "request": {
             "method": "POST",
             "header": [
@@ -131,14 +271,45 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"addressId\": \"addr-id-here\",\n    \"tipoPago\": \"tarjeta\",\n    \"tipoPedido\": \"delivery\",\n    \"notas\": \"Sin azúcar por favor\",\n    \"propina\": 15.0\n}"
+              "raw": "{\n    \"shippingMethodId\": 2,\n    \"addressId\": \"{{last_address_id}}\",\n    \"tipoPago\": \"tarjeta\",\n    \"notas\": \"Dejar en puerta\",\n    \"propina\": 10.0\n}"
             },
             "url": "{{base_url}}/orders/checkout"
           }
         },
         {
-          "name": "Ver Mis Pedidos Activos",
+          "name": "Finalizar Compra - Recoger en Sucursal",
+          "request": {
+            "method": "POST",
+            "header": [
+              { "key": "Content-Type", "value": "application/json" },
+              { "key": "X-Idempotency-Key", "value": "{{$guid}}" }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"shippingMethodId\": 1,\n    \"tipoPago\": \"efectivo\",\n    \"notas\": \"Paso en 15 min\"\n}"
+            },
+            "url": "{{base_url}}/orders/checkout"
+          }
+        },
+        {
+          "name": "Historial de Pedidos",
+          "request": { "method": "GET", "url": "{{base_url}}/orders" }
+        },
+        {
+          "name": "Pedidos Activos",
           "request": { "method": "GET", "url": "{{base_url}}/orders/active" }
+        },
+        {
+          "name": "Detalle de Pedido",
+          "request": { "method": "GET", "url": "{{base_url}}/orders/{{last_order_id}}" }
+        },
+        {
+          "name": "Tracking de Pedido",
+          "request": { "method": "GET", "url": "{{base_url}}/orders/{{last_order_id}}/tracking" }
+        },
+        {
+          "name": "Cancelar Pedido",
+          "request": { "method": "PATCH", "url": "{{base_url}}/orders/{{last_order_id}}/cancel" }
         }
       ]
     },
@@ -158,7 +329,15 @@
           }
         },
         {
-          "name": "Obtener Recomendaciones IA",
+          "name": "Mensaje de Bienvenida IA",
+          "request": { "method": "GET", "url": "{{base_url}}/chat/welcome" }
+        },
+        {
+          "name": "Historial de Chat",
+          "request": { "method": "GET", "url": "{{base_url}}/chat/history" }
+        },
+        {
+          "name": "Recomendaciones IA",
           "request": {
             "method": "POST",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
@@ -168,6 +347,38 @@
             },
             "url": "{{base_url}}/chat/recommendations"
           }
+        },
+        {
+          "name": "Quiz de Recomendaciones",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"answers\": {\n        \"momento\": \"mañana\",\n        \"sabor\": \"dulce\"\n    }\n}"
+            },
+            "url": "{{base_url}}/chat/recommendations/quiz"
+          }
+        },
+        {
+          "name": "Ver Promociones",
+          "request": { "method": "GET", "url": "{{base_url}}/promotions" }
+        },
+        {
+          "name": "Validar Cupón",
+          "request": { "method": "POST", "url": "{{base_url}}/coupons/validate?code=COFFEE10" }
+        },
+        {
+          "name": "Info de la Tienda",
+          "request": { "method": "GET", "url": "{{base_url}}/store/info" }
+        },
+        {
+          "name": "Horarios de la Tienda",
+          "request": { "method": "GET", "url": "{{base_url}}/store/hours" }
+        },
+        {
+          "name": "Preguntas Frecuentes (FAQ)",
+          "request": { "method": "GET", "url": "{{base_url}}/faq" }
         }
       ]
     }
@@ -179,6 +390,10 @@
   "variable": [
     { "key": "base_url", "value": "http://localhost:8000/api/v1" },
     { "key": "auth_token_client", "value": "" },
-    { "key": "firebase_api_key", "value": "YOUR_FIREBASE_KEY" }
+    { "key": "auth_token_firebase_client", "value": "" },
+    { "key": "firebase_api_key", "value": "YOUR_FIREBASE_KEY" },
+    { "key": "last_address_id", "value": "" },
+    { "key": "last_cart_item_id", "value": "" },
+    { "key": "last_order_id", "value": "" }
   ]
 }
