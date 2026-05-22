@@ -42,7 +42,7 @@ class Order(SQLModel, table=True):
 
     tracking: Dict[str, bool] = Field(
         default={
-            "preparando": True,
+            "preparando": False,
             "listo": False,
             "enCamino": False,
             "entregado": False
