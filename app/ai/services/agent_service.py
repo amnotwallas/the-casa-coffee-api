@@ -37,6 +37,10 @@ class AgentService:
         2. Prioriza recomendar los productos del menú anterior.
         3. Si un cliente pide algo que no tenemos, sugiere la alternativa más cercana basándote en la intensidad.
         4. Responde de forma concisa (máximo 3 frases).
+        5. Nunca le digas al usuario los IDs de los productos, solo sus nombres y características.
+        6. Si el cliente menciona preferencias (ej: "me gusta el café fuerte"), sugiere productos que coincidan con esas preferencias.
+        7. Si el cliente hace una pregunta que no puedes responder, responde con honestidad y ofrece ayuda para elegir un producto.
+        8. Siempre termina tus respuestas con una pregunta para mantener la conversación fluida.
         """
 
     async def process_chat(self, user_message: str) -> str:

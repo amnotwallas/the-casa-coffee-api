@@ -128,7 +128,7 @@ class AdminService:
 
     async def update_order_status(self, order_id: str, status: str) -> dict:
         """
-        Update order status and tracking information.
+        Update order status and tracking information, and notify the user.
         """
         tracking_map = {
             "preparing": {"preparando": True},
@@ -136,7 +136,33 @@ class AdminService:
             "on_the_way": {"enCamino": True},
             "delivered": {"entregado": True}
         }
+        
         updated = await self.order_repo.update_order_status(order_id, status, tracking_map.get(status))
         if not updated:
             raise EntityNotFoundException(message="Order not found")
+
+        # --- NOTIFICACIÓN AUTOMÁTICA AL CLIENTE ---
+        status_messages = {
+            "preparing": ("Estamos preparando tu pedido", "Tu café está en manos de nuestros baristas."),
+            "ready": ("¡Tu pedido está listo!", "Ya puedes pasar por él o estar pendiente de la entrega."),
+            "on_the_way": ("Tu pedido va en camino", "Nuestro repartidor está cerca de tu ubicación."),
+            "delivered": ("Pedido entregado", "¡Gracias por elegir The Casa Chill & Coffee! Disfruta tu bebida."),
+            "cancelled": ("Pedido cancelado", "Tu pedido ha sido cancelado. Si tienes dudas, contáctanos.")
+        }
+
+        if status in status_messages:
+            titulo, mensaje = status_messages[status]
+            from app.models.support import Notification
+            
+            notification = Notification(
+                user_id=updated.user_id,
+                titulo=titulo,
+                mensaje=mensaje,
+                tipo="ORDER_STATUS"
+            )
+            
+            # Usamos el support_repo para guardar la notificación
+            self.support_repo.session.add(notification)
+            await self.support_repo.session.commit()
+
         return OrderBase.model_validate(updated).model_dump()
