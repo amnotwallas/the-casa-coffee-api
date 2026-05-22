@@ -8,7 +8,7 @@ from app.core.database import engine, init_db
 from app.models.user import User, Address, Preference
 from app.models.product import Product, Category, Nutrition, Customization, CustomizationOption
 from app.models.support import Review, StoreInfo, StoreSchedule
-from app.models.order import Order, OrderItem
+from app.models.order import Order, OrderItem, ShippingMethod
 
 def load_json_data(file_path: str) -> Dict[str, Any]:
     with open(file_path, "r", encoding="utf-8") as f:
@@ -35,9 +35,12 @@ async def migrate_users(session: AsyncSession, users: List[Dict[str, Any]]):
             # Determine if admin based on email or flag
             is_admin = u.get("is_admin", False) or u["email"].endswith("@thecasa.com")
             
+            # Usar UID real si viene en el JSON, sino generar uno de semilla
+            firebase_uid = u.get("firebase_uid") or f"seed_uid_{u['id']}"
+            
             user = User(
                 id=u["id"],
-                firebase_uid=f"seed_uid_{u['id']}",
+                firebase_uid=firebase_uid,
                 nombre=u["nombre"],
                 email=u["email"],
                 is_admin=is_admin,
@@ -188,6 +191,18 @@ async def migrate_store_info(session: AsyncSession, info: Dict[str, Any]):
             ))
     await session.commit()
 
+async def migrate_shipping_methods(session: AsyncSession):
+    print("-> Migrando métodos de envío...")
+    methods = [
+        {"id": 1, "nombre": "Recoger en Sucursal", "costo": 0.0, "requiere_direccion": False},
+        {"id": 2, "nombre": "Envío a Domicilio", "costo": 40.0, "requiere_direccion": True}
+    ]
+    for m in methods:
+        existing = await session.get(ShippingMethod, m["id"])
+        if not existing:
+            session.add(ShippingMethod(**m))
+    await session.commit()
+
 async def seed_database():
     print("🚀 Iniciando siembra de base de datos (100% Relacional)")
     
@@ -196,11 +211,12 @@ async def seed_database():
     
     async with AsyncSession(engine, expire_on_commit=False) as session:
         try:
+            await migrate_shipping_methods(session)
             await migrate_categories(session, data.get("categories", []))
             await migrate_users(session, data.get("users", []))
             await migrate_products(session, data.get("products", []))
-            await migrate_orders(session, data.get("orders", []))
-            await migrate_reviews(session, data.get("reviews", {}))
+            #await migrate_orders(session, data.get("orders", []))
+            #await migrate_reviews(session, data.get("reviews", {}))
             await migrate_store_info(session, data.get("store_info", {}))
             
             await session.commit()

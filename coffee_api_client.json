@@ -381,6 +381,72 @@
           "request": { "method": "GET", "url": "{{base_url}}/faq" }
         }
       ]
+    },
+    {
+      "name": "6. Notificaciones",
+      "item": [
+        {
+          "name": "Listar Mis Notificaciones",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var jsonData = pm.response.json();",
+                  "if (jsonData && jsonData.length > 0) {",
+                  "    pm.collectionVariables.set(\"last_notification_id\", jsonData[0].id);",
+                  "}"
+                ],
+                "type": "text/javascript"
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "url": "{{base_url}}/notifications"
+          }
+        },
+        {
+          "name": "Marcar como Leída",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/notifications/{{last_notification_id}}/read"
+          }
+        },
+        {
+          "name": "Marcar Todas como Leídas",
+          "request": {
+            "method": "PATCH",
+            "url": "{{base_url}}/notifications/read-all"
+          }
+        },
+        {
+          "name": "Registrar Token para Push",
+          "request": {
+            "method": "POST",
+            "url": {
+              "raw": "{{base_url}}/notifications/token?deviceToken=SIMULATED_TOKEN_123&platform=ios",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "notifications",
+                "token"
+              ],
+              "query": [
+                {
+                  "key": "deviceToken",
+                  "value": "SIMULATED_TOKEN_123"
+                },
+                {
+                  "key": "platform",
+                  "value": "ios"
+                }
+              ]
+            }
+          }
+        }
+      ]
     }
   ],
   "auth": {
@@ -394,6 +460,7 @@
     { "key": "firebase_api_key", "value": "YOUR_FIREBASE_KEY" },
     { "key": "last_address_id", "value": "" },
     { "key": "last_cart_item_id", "value": "" },
-    { "key": "last_order_id", "value": "" }
+    { "key": "last_order_id", "value": "" },
+    { "key": "last_notification_id", "value": "" }
   ]
 }
