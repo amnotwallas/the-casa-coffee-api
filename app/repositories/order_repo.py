@@ -1,7 +1,7 @@
 from typing import List, Optional
 from sqlmodel import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
-from app.models.order import Order, OrderItem, CartDB, CartItem
+from app.models.order import Order, OrderItem, CartDB, CartItem, ShippingMethod
 from app.core.logger import get_logger
 
 logger = get_logger(__name__)
@@ -385,3 +385,14 @@ class OrderRepository:
             await self.session.commit()
             return await self.find_order_by_id(order_id)
         return None
+
+    # --- SHIPPING METHODS ---
+    async def get_shipping_methods(self) -> List[ShippingMethod]:
+        """List all available shipping/pickup methods."""
+        statement = select(ShippingMethod).where(ShippingMethod.disponible == True)
+        result = await self.session.execute(statement)
+        return result.scalars().all()
+
+    async def get_shipping_method(self, method_id: int) -> Optional[ShippingMethod]:
+        """Get a specific shipping method by ID."""
+        return await self.session.get(ShippingMethod, method_id)
