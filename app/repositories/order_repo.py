@@ -3,6 +3,7 @@ from sqlmodel import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from app.models.order import Order, OrderItem, CartDB, CartItem, ShippingMethod
 from app.core.logger import get_logger
+from app.core.datetime_utils import get_now
 
 logger = get_logger(__name__)
 
@@ -189,7 +190,7 @@ class OrderRepository:
         from app.models.order import OrderItem, Order
         
         # 1. Definir periodos de tiempo precisos
-        now = datetime.utcnow()
+        now = get_now()
         today_date = now.date()
         yesterday_date = today_date - timedelta(days=1)
         
