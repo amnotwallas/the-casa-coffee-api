@@ -1,6 +1,7 @@
 from sqlmodel import SQLModel, Field, Column, JSON, Relationship
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+from app.core.datetime_utils import get_now
 import uuid
 
 class OrderItem(SQLModel, table=True):
@@ -26,7 +27,7 @@ class ShippingMethod(SQLModel, table=True):
 class Order(SQLModel, table=True):
     id: str = Field(default_factory=lambda: str(uuid.uuid4()), primary_key=True)
     user_id: str = Field(index=True)
-    fecha: datetime = Field(default_factory=datetime.utcnow, index=True)
+    fecha: datetime = Field(default_factory=get_now, index=True)
     
     # Normalización de ítems
     items: List[OrderItem] = Relationship(back_populates="order", sa_relationship_kwargs={"cascade": "all, delete-orphan"})

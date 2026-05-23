@@ -1,6 +1,7 @@
 from sqlmodel import SQLModel, Field, Column, JSON, Relationship
 from typing import List, Optional, Dict, Any
 from datetime import datetime
+from app.core.datetime_utils import get_now
 import uuid
 
 class Review(SQLModel, table=True):
@@ -11,7 +12,7 @@ class Review(SQLModel, table=True):
     rating: int
     comentario: str
     fotos: List[str] = Field(default=[], sa_column=Column(JSON))
-    fecha: datetime = Field(default_factory=datetime.utcnow)
+    fecha: datetime = Field(default_factory=get_now)
     helpful_count: int = 0
 
 class Promotion(SQLModel, table=True):
@@ -28,7 +29,7 @@ class Notification(SQLModel, table=True):
     user_id: str = Field(index=True)
     titulo: str
     mensaje: str
-    fecha: datetime = Field(default_factory=datetime.utcnow)
+    fecha: datetime = Field(default_factory=get_now)
     leida: bool = False
     tipo: str = "info"
 
