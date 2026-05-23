@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     DEBUG: bool = True
     
     # --- Firebase Configuration ---
+    TIMEZONE: str = "America/Mexico_City"
     FIREBASE_CREDENTIALS: Optional[str] = None # Path to service account JSON
     SECRET_KEY: str = "dev_secret_key_64_chars_long_placeholder"
     JWT_ALGORITHM: str = "HS256"
