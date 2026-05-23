@@ -42,18 +42,23 @@ class AuthService:
                 logger.info(f"Linking existing email {email} to new Firebase UID: {firebase_uid}")
                 user = await self.repository.update(user.id, {"firebase_uid": firebase_uid})
 
-        # 3. Si sigue sin existir, crearlo
+        # 3. Si sigue sin existir, crearlo (Registro Automático)
         if not user:
             logger.info(f"Creating new user for UID: {firebase_uid}")
+            
+            # Lógica de nombre por defecto: Request -> Token Firebase -> Email -> Genérico
+            fallback_name = email.split("@")[0].capitalize() if email else "Café Lover"
+            display_name = auth_data.nombre or firebase_name or fallback_name
+
             new_user = User(
                 firebase_uid=firebase_uid,
                 email=email,
-                nombre=auth_data.nombre or firebase_name or "The Casa Chill & Coffe User",
+                nombre=display_name,
                 telefono=auth_data.telefono,
                 foto=firebase_picture
             )
             user = await self.repository.create(new_user)
-            # Recargar para inicializar relaciones (direcciones, favoritos)
+            # Recargar para inicializar relaciones
             user = await self.repository.find_by_id(user.id)
         else:
             # 4. Si ya existe, actualizar campos básicos si cambiaron
