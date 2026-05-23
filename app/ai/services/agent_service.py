@@ -3,7 +3,8 @@ import json
 import re
 import random
 import asyncio
-from datetime import datetime, timezone
+from datetime import datetime
+from app.core.datetime_utils import get_now
 from typing import List, Optional
 from app.ai.providers.groq_provider import GroqProvider
 from app.repositories.product_repo import ProductRepository
@@ -62,7 +63,7 @@ class AgentService:
                     {"role": "user", "text": "Hola"},
                     {"role": "ai", "text": "¡Hola! Soy tu barista virtual."}
                 ],
-                "fecha": datetime.now(timezone.utc).isoformat()
+                "fecha": get_now().isoformat()
             }
         ]
 
