@@ -34,7 +34,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"firebase_token\": \"{{auth_token_firebase_admin}}\",\n    \"nombre\": \"Admin\"\n}",
+              "raw": "{\n    \"firebase_token\": \"{{auth_token_firebase_admin}}\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": "{{base_url}}/auth/login"

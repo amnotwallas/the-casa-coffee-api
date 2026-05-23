@@ -62,7 +62,7 @@
             "header": [{ "key": "Content-Type", "value": "application/json" }],
             "body": {
               "mode": "raw",
-              "raw": "{\n    \"firebase_token\": \"{{auth_token_firebase_client}}\",\n    \"nombre\": \"Usuario Test\",\n    \"telefono\": \"+525512345678\"\n}",
+              "raw": "{\n    \"firebase_token\": \"{{auth_token_firebase_client}}\"\n}",
               "options": { "raw": { "language": "json" } }
             },
             "url": "{{base_url}}/auth/verify"
@@ -85,7 +85,7 @@
           "request": { "method": "GET", "url": "{{base_url}}/user/profile" }
         },
         {
-          "name": "Actualizar Mi Perfil",
+          "name": "Completar / Actualizar Perfil",
           "request": {
             "method": "PATCH",
             "header": [{ "key": "Content-Type", "value": "application/json" }],
